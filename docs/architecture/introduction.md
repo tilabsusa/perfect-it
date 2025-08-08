@@ -12,7 +12,7 @@ Based on your clarification, this project uses the **AWS Amplify Next.js Templat
 - **Template Type:** Official AWS sample template for Amplify Gen 2 with Next.js
 - **Key Features:** Pre-configured Next.js 14+ App Router, Amplify Gen 2 backend setup, TypeScript support, authentication scaffolding
 
-**Decision:** Clone and customize the `amplify-next-template` which provides:
+**Decision:** Development will proceed using the already-cloned `amplify-next-template` which provides:
 - Pre-configured monorepo structure with Next.js and Amplify backend
 - Working authentication setup with Amplify Auth
 - Example data models and API configuration

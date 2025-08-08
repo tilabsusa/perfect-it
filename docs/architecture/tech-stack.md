@@ -15,6 +15,7 @@
 | **UI Library** | React | 18.3.0 | Component library | Industry standard, huge ecosystem, Amplify UI support |
 | **UI Components** | Amplify UI React | 6.1.0 | Connected components | Pre-built auth, storage, data components |
 | **UI Design System** | Material-UI (MUI) | 5.15.0 | Component library | Comprehensive components, theming, accessibility |
+| **Next.js Adapter** | Amplify Adapter Next.js | 1.6.8 | Next.js integration | Server-side Amplify context, SSR support |
 | **Backend Framework** | AWS Amplify Gen 2 | 1.0.0 | Backend infrastructure | Integrated AWS services, type-safe, real-time |
 | **API** | AWS AppSync | Managed | GraphQL API | Real-time subscriptions, managed scaling |
 | **Database** | DynamoDB | Managed | NoSQL database | Serverless, scalable, cost-effective |
@@ -26,10 +27,10 @@
 | **State Management** | Amplify DataStore | 5.0.0 | Offline-first sync | Conflict resolution, real-time sync |
 | **CSS Framework** | MUI Styling System | 5.15.0 | CSS-in-JS | sx prop, styled components, theme consistency |
 | **Testing** | Jest | 29.7.0 | Test framework | Unit/integration testing, good TS support |
-| **Testing (E2E)** | Playwright | 1.41.0 | E2E testing | Cross-browser, reliable, fast |
-| **Linting** | ESLint | 8.56.0 | Code quality | Catches errors, enforces standards |
+| **Testing (E2E)** | Playwright | 1.41.2 | E2E testing | Cross-browser, reliable, fast |
+| **Linting** | ESLint | 8.57.1 | Code quality | Catches errors, enforces standards |
 | **Formatting** | Prettier | 3.2.0 | Code formatting | Consistent style, auto-format |
-| **Git Hooks** | Husky | 9.0.0 | Pre-commit hooks | Enforce quality before commit |
+| **Git Hooks** | Husky | 9.1.7 | Pre-commit hooks | Enforce quality before commit |
 | **Package Manager** | npm | 10.2.0 | Dependency management | Default with Node.js, workspace support |
 | **CI/CD** | Amplify Hosting | Managed | Deployment pipeline | Automatic deployments, preview environments |
 | **Monitoring** | CloudWatch | Managed | Logs and metrics | Integrated with all AWS services |
