@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+build/
+
+# Amplify
+.amplify/
+amplify_outputs*
+
+# BMad and Claude folders (exclude from linting only)
+.bmad-core/
+.claude/
+
+# Testing
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env*.local

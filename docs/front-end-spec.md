@@ -542,11 +542,72 @@ Automated testing with axe-core, manual keyboard navigation testing, screen read
 
 ### Immediate Actions
 1. Create MUI theme configuration file with brand colors and typography
-2. Set up Amplify UI theme tokens to match brand
+2. Configure Amplify UI ThemeProvider with custom theme matching MUI brand colors
 3. Build component library in Storybook for development
 4. Create Figma/design file with all screen layouts
 5. Conduct accessibility audit of initial components
 6. Test responsive breakpoints across devices
+
+### Theme Integration Strategy
+
+#### MUI as Primary Theme System
+Material-UI provides the primary theming system for the application, with custom theme defined in `lib/theme/theme.ts`.
+
+#### Amplify UI Component Theming
+For Amplify UI components (primarily the Authenticator), apply consistent theming via:
+
+1. **ThemeProvider Wrapper:**
+```typescript
+import { ThemeProvider } from '@aws-amplify/ui-react';
+import { defaultTheme } from '@aws-amplify/ui-react';
+
+const customTheme = {
+  name: 'perfectit-theme',
+  tokens: {
+    colors: {
+      brand: {
+        primary: {
+          10: '#FFF4E6',
+          20: '#FFE0B2',
+          80: '#D2691E',
+          90: '#8B4513',
+          100: '#5D2F0B'
+        }
+      }
+    },
+    components: {
+      authenticator: {
+        router: {
+          borderColor: '{colors.brand.primary.80}'
+        }
+      }
+    }
+  }
+};
+
+// Wrap Amplify UI components
+<ThemeProvider theme={customTheme}>
+  <Authenticator />
+</ThemeProvider>
+```
+
+2. **Accessing Theme Values:**
+Use the `useTheme()` hook within components:
+```typescript
+import { useTheme } from '@aws-amplify/ui-react';
+
+function CustomComponent() {
+  const { tokens } = useTheme();
+  return <div style={{ color: tokens.colors.brand.primary[80] }}>...</div>;
+}
+```
+
+3. **Color Palette Alignment:**
+Ensure Amplify UI theme colors match MUI palette:
+- Primary: #D2691E (matches MUI primary.main)
+- Secondary: #8B4513 (matches MUI secondary.main)
+- Error: #F44336 (matches MUI error.main)
+- Success: #4CAF50 (matches MUI success.main)
 
 ### Design Handoff Checklist
 - ✓ All user flows documented

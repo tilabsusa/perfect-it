@@ -1,1 +1,4 @@
 npm run lint
+
+# Check only source code directories
+npx prettier --check "app/**/*.{js,jsx,ts,tsx,css}" "lib/**/*.{js,jsx,ts,tsx}" "amplify/**/*.{js,ts}"

@@ -11,7 +11,9 @@
     "test": "jest",
     "test:unit": "jest --coverage",
     "test:e2e": "playwright test",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prettier:check": "prettier --check .",
+    "prettier:write": "prettier --write ."
   },
   "dependencies": {
     "@aws-amplify/adapter-nextjs": "^1.6.8",
