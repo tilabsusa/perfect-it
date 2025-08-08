@@ -3,6 +3,7 @@
 ### Metrics & KPIs
 
 #### Business Metrics
+
 - Daily/Monthly Active Users
 - Card creation rate
 - User engagement (votes, comments)
@@ -10,6 +11,7 @@
 - User retention (7-day, 30-day)
 
 #### Technical Metrics
+
 - API latency (p50, p95, p99)
 - Error rates by service
 - Lambda cold start frequency
@@ -34,16 +36,18 @@ graph TB
 ### Logging Strategy
 
 #### Log Levels
+
 ```typescript
 enum LogLevel {
-  ERROR = 'error',   // System errors, exceptions
-  WARN = 'warn',     // Degraded performance
-  INFO = 'info',     // Business events
-  DEBUG = 'debug'    // Development only
+  ERROR = 'error', // System errors, exceptions
+  WARN = 'warn', // Degraded performance
+  INFO = 'info', // Business events
+  DEBUG = 'debug', // Development only
 }
 ```
 
 #### Structured Logging
+
 ```json
 {
   "timestamp": "2025-01-15T10:30:00Z",
@@ -61,25 +65,26 @@ enum LogLevel {
 
 ### Alerting Rules
 
-| Alert | Condition | Severity | Response |
-|-------|-----------|----------|----------|
-| High Error Rate | > 5% errors | Critical | Page on-call |
-| API Latency | p95 > 1s | Warning | Investigate |
-| DynamoDB Throttle | Any throttles | Warning | Scale capacity |
-| Lambda Timeout | > 10/minute | Critical | Check function |
-| Low Disk Space | < 10% free | Warning | Clean logs |
+| Alert             | Condition     | Severity | Response       |
+| ----------------- | ------------- | -------- | -------------- |
+| High Error Rate   | > 5% errors   | Critical | Page on-call   |
+| API Latency       | p95 > 1s      | Warning  | Investigate    |
+| DynamoDB Throttle | Any throttles | Warning  | Scale capacity |
+| Lambda Timeout    | > 10/minute   | Critical | Check function |
+| Low Disk Space    | < 10% free    | Warning  | Clean logs     |
 
 ### Dashboards
 
 #### Operations Dashboard
+
 - Service health status
 - Real-time error rates
 - API performance metrics
 - Infrastructure utilization
 
 #### Business Dashboard
+
 - User growth trends
 - Content creation metrics
 - Engagement analytics
 - Revenue metrics (future)
-

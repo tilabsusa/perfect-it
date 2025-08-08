@@ -2,12 +2,17 @@
 
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.js
 .yarn/install-state.gz
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/playwright/.cache
+*.lcov
 
 # next.js
 /.next/

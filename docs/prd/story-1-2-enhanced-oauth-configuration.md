@@ -1,11 +1,13 @@
 # Story 1.2 (Enhanced): Implement Authentication Backend with Cognito and OAuth Providers
 
 ## Story Statement
+
 As a platform owner,  
 I want users to register and authenticate securely with email/password and social providers,  
 so that we can protect user data and provide personalized experiences with multiple authentication options.
 
 ## Dependencies
+
 - **BLOCKER:** Story 1.0 (User Prerequisites) must be 100% complete
 - **REQUIRED:** Story 1.1 (Project initialization) must be complete
 
@@ -14,6 +16,7 @@ so that we can protect user data and provide personalized experiences with multi
 ### Part A: Cognito User Pool Configuration
 
 #### Step 1: Define Amplify Auth Resource
+
 **File:** `amplify/auth/resource.ts`
 
 ```typescript
@@ -27,27 +30,27 @@ export const auth = defineAuth({
   userAttributes: {
     email: {
       required: true,
-      mutable: true
+      mutable: true,
     },
     preferred_username: {
       required: false,
-      mutable: true
+      mutable: true,
     },
     name: {
       required: false,
-      mutable: true
+      mutable: true,
     },
     picture: {
       required: false,
-      mutable: true
-    }
+      mutable: true,
+    },
   },
   passwordPolicy: {
     minLength: 8,
     requireLowercase: true,
     requireUppercase: true,
     requireNumbers: true,
-    requireSymbols: true
+    requireSymbols: true,
   },
   accountRecovery: 'EMAIL_ONLY',
   userGroups: [
@@ -62,12 +65,13 @@ export const auth = defineAuth({
     {
       groupName: 'admin',
       description: 'Platform administrators with full access',
-    }
-  ]
+    },
+  ],
 });
 ```
 
 #### Step 2: Configure Lambda Triggers
+
 **File:** `amplify/auth/post-confirmation/handler.ts`
 
 ```typescript
@@ -90,15 +94,17 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
     cardsCreated: 0,
     totalUpvotes: 0,
     isActive: true,
-    profileComplete: false
+    profileComplete: false,
   };
 
   try {
-    await docClient.send(new PutCommand({
-      TableName: process.env.USER_PROFILE_TABLE_NAME!,
-      Item: userProfile
-    }));
-    
+    await docClient.send(
+      new PutCommand({
+        TableName: process.env.USER_PROFILE_TABLE_NAME!,
+        Item: userProfile,
+      })
+    );
+
     console.log('User profile created successfully:', userProfile.id);
   } catch (error) {
     console.error('Error creating user profile:', error);
@@ -112,6 +118,7 @@ export const handler: PostConfirmationTriggerHandler = async (event) => {
 ### Part B: OAuth Provider Integration
 
 #### Step 3: Configure Google OAuth
+
 **File:** `amplify/auth/oauth/google-config.ts`
 
 ```typescript
@@ -126,12 +133,13 @@ export const googleOAuthConfig = {
     name: 'name',
     picture: 'picture',
     preferred_username: 'email',
-    email_verified: 'email_verified'
-  }
+    email_verified: 'email_verified',
+  },
 };
 ```
 
 **Manual AWS Console Steps Required:**
+
 1. Navigate to Cognito User Pool in AWS Console
 2. Go to "Sign-in experience" → "Federated identity provider sign-in"
 3. Click "Add identity provider" → "Google"
@@ -144,6 +152,7 @@ export const googleOAuthConfig = {
 7. Save configuration
 
 #### Step 4: Configure Facebook OAuth
+
 **File:** `amplify/auth/oauth/facebook-config.ts`
 
 ```typescript
@@ -157,12 +166,13 @@ export const facebookOAuthConfig = {
     email: 'email',
     name: 'name',
     picture: 'picture.data.url',
-    preferred_username: 'email'
-  }
+    preferred_username: 'email',
+  },
 };
 ```
 
 **Manual AWS Console Steps Required:**
+
 1. In Cognito User Pool, go to "Sign-in experience"
 2. Click "Add identity provider" → "Facebook"
 3. Enter the Facebook App ID and App Secret from Story 1.0
@@ -173,7 +183,9 @@ export const facebookOAuthConfig = {
 6. Save configuration
 
 #### Step 5: Configure App Client Settings
+
 **AWS Console Configuration:**
+
 1. Go to Cognito User Pool → "App integration" → "App clients"
 2. Select your app client
 3. Configure Hosted UI:
@@ -196,6 +208,7 @@ export const facebookOAuthConfig = {
 ### Part C: Environment Configuration
 
 #### Step 6: Set Up AWS Secrets Manager
+
 **Script:** `scripts/setup-secrets.sh`
 
 ```bash
@@ -244,6 +257,7 @@ echo "Secrets created successfully in AWS Secrets Manager"
 ```
 
 #### Step 7: Local Development Configuration
+
 **File:** `.env.local` (git-ignored)
 
 ```env
@@ -260,6 +274,7 @@ NEXT_PUBLIC_FACEBOOK_APP_ID=your-facebook-app-id
 ### Part D: Frontend OAuth Integration
 
 #### Step 8: Update Amplify Configuration
+
 **File:** `src/amplifyconfiguration.ts`
 
 ```typescript
@@ -276,12 +291,12 @@ const config = {
           redirectSignIn: [process.env.NEXT_PUBLIC_REDIRECT_SIGN_IN!],
           redirectSignOut: [process.env.NEXT_PUBLIC_REDIRECT_SIGN_OUT!],
           responseType: 'code',
-          providers: ['Google', 'Facebook']
+          providers: ['Google', 'Facebook'],
         },
-        email: true
-      }
-    }
-  }
+        email: true,
+      },
+    },
+  },
 };
 
 export default config;
@@ -292,12 +307,14 @@ export default config;
 ### Test Cases
 
 1. **Email/Password Registration:**
+
    - Register with valid email
    - Receive verification code
    - Verify email successfully
    - Confirm user profile created in DynamoDB
 
 2. **Google OAuth Flow:**
+
    - Click "Sign in with Google"
    - Redirect to Google login
    - Authorize and redirect back
@@ -305,6 +322,7 @@ export default config;
    - Verify profile created in DynamoDB
 
 3. **Facebook OAuth Flow:**
+
    - Click "Sign in with Facebook"
    - Redirect to Facebook login
    - Authorize and redirect back
@@ -312,6 +330,7 @@ export default config;
    - Verify profile created in DynamoDB
 
 4. **Password Policy:**
+
    - Try weak password: "password" (should fail)
    - Try valid password: "MyStr0ng!Pass" (should succeed)
 
@@ -322,6 +341,7 @@ export default config;
 ## Acceptance Criteria
 
 ### Technical Implementation:
+
 - [ ] Cognito User Pool configured with required attributes
 - [ ] Password policy enforced (8+ chars, upper, lower, number, symbol)
 - [ ] Email verification enabled and working
@@ -332,6 +352,7 @@ export default config;
 - [ ] OAuth callback URLs properly configured
 
 ### User Experience:
+
 - [ ] Users can register with email/password
 - [ ] Users receive and can verify email
 - [ ] "Sign in with Google" button works
@@ -341,6 +362,7 @@ export default config;
 - [ ] Loading states shown during authentication
 
 ### Security:
+
 - [ ] Secrets stored in AWS Secrets Manager
 - [ ] No credentials in source code
 - [ ] HTTPS enforced for all OAuth redirects
@@ -350,6 +372,7 @@ export default config;
 ## Rollback Plan
 
 If OAuth integration fails:
+
 1. Disable social providers in Cognito console
 2. Remove OAuth buttons from UI
 3. Continue with email/password only
@@ -358,13 +381,13 @@ If OAuth integration fails:
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| "redirect_uri_mismatch" error | Verify callback URLs match exactly in all three places (Google/Facebook console, Cognito, Frontend config) |
-| Users not created in DynamoDB | Check Lambda function logs in CloudWatch, verify table name environment variable |
-| Social login attributes missing | Review attribute mapping in Cognito console |
-| "Invalid request" on OAuth callback | Ensure CORS is configured correctly in Amplify |
-| Session expires too quickly | Adjust token expiration in Cognito app client settings |
+| Issue                               | Solution                                                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| "redirect_uri_mismatch" error       | Verify callback URLs match exactly in all three places (Google/Facebook console, Cognito, Frontend config) |
+| Users not created in DynamoDB       | Check Lambda function logs in CloudWatch, verify table name environment variable                           |
+| Social login attributes missing     | Review attribute mapping in Cognito console                                                                |
+| "Invalid request" on OAuth callback | Ensure CORS is configured correctly in Amplify                                                             |
+| Session expires too quickly         | Adjust token expiration in Cognito app client settings                                                     |
 
 ## Documentation Updates Required
 

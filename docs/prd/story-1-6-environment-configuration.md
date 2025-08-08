@@ -1,14 +1,17 @@
 # Story 1.6: Environment Configuration and Secrets Management
 
 ## Story Statement
+
 As a developer,  
 I want a secure and systematic way to manage configuration across all environments,  
 so that sensitive data is protected and deployments are consistent and reliable.
 
 ## Priority: CRITICAL
+
 This story must be completed before Story 1.5 (deployment pipeline) to ensure proper configuration management.
 
 ## Overview
+
 This story establishes the complete environment configuration strategy using AWS Systems Manager Parameter Store and AWS Secrets Manager, with clear separation between public configuration and sensitive secrets.
 
 ## Implementation Plan
@@ -18,12 +21,14 @@ This story establishes the complete environment configuration strategy using AWS
 #### Configuration Categories
 
 1. **Public Configuration** (Parameter Store - Standard)
+
    - API endpoints
    - Public bucket names
    - Feature flags
    - Application settings
 
 2. **Sensitive Secrets** (Secrets Manager)
+
    - OAuth client secrets
    - API keys
    - Database credentials
@@ -37,6 +42,7 @@ This story establishes the complete environment configuration strategy using AWS
 ### Part B: AWS Systems Manager Parameter Store Setup
 
 #### Step 1: Create Parameter Store Hierarchy
+
 **Script:** `scripts/setup-parameters.ts`
 
 ```typescript
@@ -61,7 +67,7 @@ const configurations: EnvironmentConfig[] = [
       '/perfectit/dev/features/enableComments': 'true',
       '/perfectit/dev/features/enableVoting': 'true',
       '/perfectit/dev/features/maintenanceMode': 'false',
-    }
+    },
   },
   {
     environment: 'staging',
@@ -74,7 +80,7 @@ const configurations: EnvironmentConfig[] = [
       '/perfectit/staging/features/enableComments': 'true',
       '/perfectit/staging/features/enableVoting': 'true',
       '/perfectit/staging/features/maintenanceMode': 'false',
-    }
+    },
   },
   {
     environment: 'prod',
@@ -87,28 +93,30 @@ const configurations: EnvironmentConfig[] = [
       '/perfectit/prod/features/enableComments': 'true',
       '/perfectit/prod/features/enableVoting': 'true',
       '/perfectit/prod/features/maintenanceMode': 'false',
-    }
-  }
+    },
+  },
 ];
 
 async function setupParameters() {
   for (const config of configurations) {
     console.log(`Setting up parameters for ${config.environment} environment...`);
-    
+
     for (const [key, value] of Object.entries(config.parameters)) {
       try {
-        await client.send(new PutParameterCommand({
-          Name: key,
-          Value: value,
-          Type: 'String',
-          Overwrite: true,
-          Description: `Configuration for ${key.split('/').pop()} in ${config.environment}`,
-          Tags: [
-            { Key: 'Environment', Value: config.environment },
-            { Key: 'Project', Value: 'PerfectIt' },
-            { Key: 'ManagedBy', Value: 'Amplify' }
-          ]
-        }));
+        await client.send(
+          new PutParameterCommand({
+            Name: key,
+            Value: value,
+            Type: 'String',
+            Overwrite: true,
+            Description: `Configuration for ${key.split('/').pop()} in ${config.environment}`,
+            Tags: [
+              { Key: 'Environment', Value: config.environment },
+              { Key: 'Project', Value: 'PerfectIt' },
+              { Key: 'ManagedBy', Value: 'Amplify' },
+            ],
+          })
+        );
         console.log(`✓ Created parameter: ${key}`);
       } catch (error) {
         console.error(`✗ Failed to create parameter ${key}:`, error);
@@ -123,16 +131,21 @@ setupParameters();
 ### Part C: AWS Secrets Manager Setup
 
 #### Step 2: Create Secrets Structure
+
 **Script:** `scripts/setup-secrets.ts`
 
 ```typescript
-import { SecretsManagerClient, CreateSecretCommand, UpdateSecretCommand } from '@aws-sdk/client-secrets-manager';
+import {
+  SecretsManagerClient,
+  CreateSecretCommand,
+  UpdateSecretCommand,
+} from '@aws-sdk/client-secrets-manager';
 import * as readline from 'readline/promises';
 
 const client = new SecretsManagerClient({ region: 'us-east-1' });
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 });
 
 interface SecretConfig {
@@ -148,65 +161,69 @@ const secrets: Record<string, SecretConfig[]> = {
       name: '/perfectit/dev/oauth/google/clientSecret',
       description: 'Google OAuth Client Secret for Development',
       promptText: 'Enter Google Client Secret (dev):',
-      isPassword: true
+      isPassword: true,
     },
     {
       name: '/perfectit/dev/oauth/facebook/appSecret',
       description: 'Facebook OAuth App Secret for Development',
       promptText: 'Enter Facebook App Secret (dev):',
-      isPassword: true
+      isPassword: true,
     },
     {
       name: '/perfectit/dev/jwt/secret',
       description: 'JWT Signing Secret for Development',
       promptText: 'Enter JWT Secret (dev) or press Enter to generate:',
-      isPassword: true
-    }
+      isPassword: true,
+    },
   ],
   staging: [
     // Similar structure for staging
   ],
   prod: [
     // Similar structure for production
-  ]
+  ],
 };
 
 async function setupSecrets() {
   console.log('Setting up secrets in AWS Secrets Manager...\n');
-  
+
   for (const [env, envSecrets] of Object.entries(secrets)) {
     console.log(`\nConfiguring ${env.toUpperCase()} environment secrets:`);
     console.log('='.repeat(50));
-    
+
     for (const secret of envSecrets) {
       let value: string;
-      
+
       if (secret.promptText.includes('generate')) {
         const input = await rl.question(secret.promptText);
         value = input || generateRandomSecret();
       } else {
         value = await rl.question(secret.promptText);
       }
-      
+
       try {
-        await client.send(new CreateSecretCommand({
-          Name: secret.name,
-          Description: secret.description,
-          SecretString: value,
-          Tags: [
-            { Key: 'Environment', Value: env },
-            { Key: 'Project', Value: 'PerfectIt' },
-            { Key: 'Type', Value: 'OAuth' }
-          ]
-        }));
+        await client.send(
+          new CreateSecretCommand({
+            Name: secret.name,
+            Description: secret.description,
+            SecretString: value,
+            Tags: [
+              { Key: 'Environment', Value: env },
+              { Key: 'Project', Value: 'PerfectIt' },
+              { Key: 'Type', Value: 'OAuth' },
+            ],
+          })
+        );
         console.log(`✓ Created secret: ${secret.name}`);
       } catch (error: any) {
         if (error.name === 'ResourceExistsException') {
           // Update existing secret
-          await client.send(new UpdateSecretCommand({
-            SecretId: secret.name,
-            SecretString: value
-          }));
+          await client.send(
+            new UpdateSecretCommand({
+              SecretId: secret.name,
+              SecretString: value,
+            })
+          );
           console.log(`✓ Updated existing secret: ${secret.name}`);
         } else {
           console.error(`✗ Failed to create secret ${secret.name}:`, error.message);
@@ -214,7 +231,7 @@ async function setupSecrets() {
       }
     }
   }
-  
+
   rl.close();
 }
 
@@ -229,6 +246,7 @@ setupSecrets();
 ### Part D: Environment Files Configuration
 
 #### Step 3: Create Environment Templates
+
 **File:** `.env.example`
 
 ```bash
@@ -274,6 +292,7 @@ LOCAL_JWT_SECRET=your-jwt-secret-for-local-dev
 ```
 
 #### Step 4: Create Configuration Loader
+
 **File:** `src/config/environment.ts`
 
 ```typescript
@@ -291,7 +310,9 @@ class ConfigurationManager {
 
   private constructor() {
     this.ssmClient = new SSMClient({ region: process.env.AWS_REGION || 'us-east-1' });
-    this.secretsClient = new SecretsManagerClient({ region: process.env.AWS_REGION || 'us-east-1' });
+    this.secretsClient = new SecretsManagerClient({
+      region: process.env.AWS_REGION || 'us-east-1',
+    });
     this.environment = (process.env.NEXT_PUBLIC_ENVIRONMENT as Environment) || 'local';
   }
 
@@ -314,11 +335,13 @@ class ConfigurationManager {
 
     try {
       const parameterPath = `/perfectit/${this.environment}/${key}`;
-      const response = await this.ssmClient.send(new GetParameterCommand({
-        Name: parameterPath,
-        WithDecryption: true
-      }));
-      
+      const response = await this.ssmClient.send(
+        new GetParameterCommand({
+          Name: parameterPath,
+          WithDecryption: true,
+        })
+      );
+
       const value = response.Parameter?.Value;
       if (value) {
         this.cache.set(cacheKey, value);
@@ -342,10 +365,12 @@ class ConfigurationManager {
 
     try {
       const secretPath = `/perfectit/${this.environment}/${key}`;
-      const response = await this.secretsClient.send(new GetSecretValueCommand({
-        SecretId: secretPath
-      }));
-      
+      const response = await this.secretsClient.send(
+        new GetSecretValueCommand({
+          SecretId: secretPath,
+        })
+      );
+
       const value = response.SecretString;
       if (value) {
         this.cache.set(cacheKey, value);
@@ -363,14 +388,16 @@ class ConfigurationManager {
     }
 
     try {
-      const response = await this.ssmClient.send(new GetParametersByPathCommand({
-        Path: `/perfectit/${this.environment}/`,
-        Recursive: true,
-        WithDecryption: true
-      }));
+      const response = await this.ssmClient.send(
+        new GetParametersByPathCommand({
+          Path: `/perfectit/${this.environment}/`,
+          Recursive: true,
+          WithDecryption: true,
+        })
+      );
 
       const parameters: Record<string, string> = {};
-      response.Parameters?.forEach(param => {
+      response.Parameters?.forEach((param) => {
         if (param.Name && param.Value) {
           const key = param.Name.replace(`/perfectit/${this.environment}/`, '');
           parameters[key] = param.Value;
@@ -407,22 +434,23 @@ export const ConfigKeys = {
   USER_POOL_ID: 'cognito/userPoolId',
   USER_POOL_CLIENT_ID: 'cognito/clientId',
   S3_BUCKET: 's3/bucketName',
-  
+
   // Feature flags
   ENABLE_COMMENTS: 'features/enableComments',
   ENABLE_VOTING: 'features/enableVoting',
   MAINTENANCE_MODE: 'features/maintenanceMode',
-  
+
   // Secrets
   GOOGLE_CLIENT_SECRET: 'oauth/google/clientSecret',
   FACEBOOK_APP_SECRET: 'oauth/facebook/appSecret',
-  JWT_SECRET: 'jwt/secret'
+  JWT_SECRET: 'jwt/secret',
 } as const;
 ```
 
 ### Part E: Amplify Integration
 
 #### Step 5: Configure Amplify Backend
+
 **File:** `amplify/backend.ts`
 
 ```typescript
@@ -435,33 +463,25 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 const backend = defineBackend({
   auth,
   data,
-  storage
+  storage,
 });
 
 // Grant Lambda functions access to Parameter Store
 const parameterStorePolicy = new iam.PolicyStatement({
-  actions: [
-    'ssm:GetParameter',
-    'ssm:GetParameters',
-    'ssm:GetParametersByPath'
-  ],
-  resources: [
-    `arn:aws:ssm:${backend.stack.region}:${backend.stack.account}:parameter/perfectit/*`
-  ]
+  actions: ['ssm:GetParameter', 'ssm:GetParameters', 'ssm:GetParametersByPath'],
+  resources: [`arn:aws:ssm:${backend.stack.region}:${backend.stack.account}:parameter/perfectit/*`],
 });
 
 // Grant Lambda functions access to Secrets Manager
 const secretsManagerPolicy = new iam.PolicyStatement({
-  actions: [
-    'secretsmanager:GetSecretValue'
-  ],
+  actions: ['secretsmanager:GetSecretValue'],
   resources: [
-    `arn:aws:secretsmanager:${backend.stack.region}:${backend.stack.account}:secret:/perfectit/*`
-  ]
+    `arn:aws:secretsmanager:${backend.stack.region}:${backend.stack.account}:secret:/perfectit/*`,
+  ],
 });
 
 // Apply policies to all Lambda functions
-Object.values(backend.resources).forEach(resource => {
+Object.values(backend.resources).forEach((resource) => {
   if (resource.lambda) {
     resource.lambda.addToRolePolicy(parameterStorePolicy);
     resource.lambda.addToRolePolicy(secretsManagerPolicy);
@@ -472,9 +492,10 @@ Object.values(backend.resources).forEach(resource => {
 ### Part F: CI/CD Pipeline Configuration
 
 #### Step 6: GitHub Actions Secrets Setup
+
 **Documentation:** `docs/deployment/github-secrets.md`
 
-```markdown
+````markdown
 # GitHub Secrets Configuration
 
 The following secrets must be configured in GitHub repository settings:
@@ -482,11 +503,13 @@ The following secrets must be configured in GitHub repository settings:
 ## Required Secrets
 
 ### AWS Credentials
+
 - `AWS_ACCESS_KEY_ID`: IAM user access key for deployments
 - `AWS_SECRET_ACCESS_KEY`: IAM user secret key for deployments
 - `AWS_REGION`: AWS region (us-east-1)
 
 ### Environment-Specific Secrets
+
 For each environment (DEV, STAGING, PROD), create:
 
 - `{ENV}_USER_POOL_ID`: Cognito User Pool ID
@@ -513,7 +536,9 @@ gh secret set AWS_REGION --body "us-east-1"
 gh secret set DEV_USER_POOL_ID --body "us-east-1_XXXXXXXXX"
 # ... repeat for all secrets
 ```
-```
+````
+
+````
 
 ### Part G: Local Development Setup
 
@@ -563,28 +588,32 @@ echo "   Next steps:"
 echo "   1. Edit .env.local with your values"
 echo "   2. Run 'npm install' to install dependencies"
 echo "   3. Run 'npm run dev' to start development server"
-```
+````
 
 ## Testing & Validation
 
 ### Validation Checklist
 
 1. **Parameter Store Access:**
+
    ```bash
    aws ssm get-parameter --name "/perfectit/dev/api/endpoint"
    ```
 
 2. **Secrets Manager Access:**
+
    ```bash
    aws secretsmanager get-secret-value --secret-id "/perfectit/dev/jwt/secret"
    ```
 
 3. **Local Environment:**
+
    - Verify .env.local is created
    - Confirm all required variables are set
    - Test configuration loading in application
 
 4. **Lambda Access:**
+
    - Deploy a test Lambda
    - Verify it can read parameters and secrets
    - Check CloudWatch logs for errors
@@ -597,6 +626,7 @@ echo "   3. Run 'npm run dev' to start development server"
 ## Acceptance Criteria
 
 ### Implementation Complete:
+
 - [ ] Parameter Store hierarchy created for all environments
 - [ ] Secrets Manager secrets created and populated
 - [ ] Configuration manager class implemented
@@ -606,6 +636,7 @@ echo "   3. Run 'npm run dev' to start development server"
 - [ ] GitHub Actions secrets documented
 
 ### Security Requirements:
+
 - [ ] No secrets in source code
 - [ ] Secrets encrypted at rest
 - [ ] Environment isolation enforced
@@ -613,6 +644,7 @@ echo "   3. Run 'npm run dev' to start development server"
 - [ ] Least privilege IAM policies
 
 ### Developer Experience:
+
 - [ ] Clear setup documentation
 - [ ] One-command local setup
 - [ ] Helpful error messages
@@ -622,6 +654,7 @@ echo "   3. Run 'npm run dev' to start development server"
 ## Rollback Plan
 
 If configuration system fails:
+
 1. Revert to hardcoded development values (temporary)
 2. Document all configuration values needed
 3. Manual configuration in each environment
@@ -630,13 +663,13 @@ If configuration system fails:
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| "Access Denied" to Parameter Store | Check IAM permissions, ensure correct path prefix |
-| Secrets not loading in Lambda | Verify Lambda execution role has secretsmanager:GetSecretValue permission |
-| Environment variables not set | Check .env.local exists and is properly formatted |
-| Cache stale after update | Implement cache TTL or manual cache clear |
-| Local dev can't access AWS | Use LOCAL_ prefixed environment variables |
+| Issue                              | Solution                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------- |
+| "Access Denied" to Parameter Store | Check IAM permissions, ensure correct path prefix                         |
+| Secrets not loading in Lambda      | Verify Lambda execution role has secretsmanager:GetSecretValue permission |
+| Environment variables not set      | Check .env.local exists and is properly formatted                         |
+| Cache stale after update           | Implement cache TTL or manual cache clear                                 |
+| Local dev can't access AWS         | Use LOCAL\_ prefixed environment variables                                |
 
 ## Definition of Done
 

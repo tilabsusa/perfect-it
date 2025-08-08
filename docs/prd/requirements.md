@@ -1,6 +1,7 @@
 # Requirements
 
 ### Functional
+
 - FR1: Users must be able to register accounts with email/password or OAuth social login (Google, Facebook)
 - FR2: Each user profile must display expertise tags, contributed Perfection Cards, and reputation score based on upvotes
 - FR3: Users must be able to upload images (JPEG, PNG, up to 5MB) and create Perfection Cards with structured fields (title, description, step-by-step instructions, tools, materials, difficulty level, time estimate, cost estimate)
@@ -16,6 +17,7 @@
 - FR13: The platform must track and display view counts and engagement metrics for each Perfection Card
 
 ### Non Functional
+
 - NFR1: Page load time must not exceed 3 seconds on 4G mobile connections
 - NFR2: Image upload and processing must complete within 10 seconds for a 5MB file
 - NFR3: The platform must support 1,000 concurrent users without performance degradation
@@ -28,4 +30,3 @@
 - NFR10: The platform must support Chrome, Safari, Firefox, and Edge (latest 2 versions)
 - NFR11: Database backups must occur daily with 30-day retention and point-in-time recovery capability
 - NFR12: The system must log all critical user actions for audit and debugging purposes
-

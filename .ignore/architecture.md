@@ -10,11 +10,13 @@ If the project includes a significant user interface, a separate Frontend Archit
 ### Starter Template or Existing Project
 
 Based on your clarification, this project uses the **AWS Amplify Next.js Template** as its foundation:
+
 - **Template Source:** https://github.com/aws-samples/amplify-next-template
 - **Template Type:** Official AWS sample template for Amplify Gen 2 with Next.js
 - **Key Features:** Pre-configured Next.js 14+ App Router, Amplify Gen 2 backend setup, TypeScript support, authentication scaffolding
 
 **Decision:** Clone and customize the `amplify-next-template` which provides:
+
 - Pre-configured monorepo structure with Next.js and Amplify backend
 - Working authentication setup with Amplify Auth
 - Example data models and API configuration
@@ -24,9 +26,10 @@ Based on your clarification, this project uses the **AWS Amplify Next.js Templat
 This template accelerates development by providing a production-ready foundation that aligns with AWS best practices.
 
 ### Change Log
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-08-08 | 1.0 | Initial Architecture Document | Architect |
+
+| Date       | Version | Description                   | Author    |
+| ---------- | ------- | ----------------------------- | --------- |
+| 2025-08-08 | 1.0     | Initial Architecture Document | Architect |
 
 ## High Level Architecture
 
@@ -39,12 +42,14 @@ PerfectIt employs a serverless architecture using AWS Amplify Gen 2, delivering 
 **Architectural Style:** Serverless, Event-Driven Architecture leveraging AWS managed services for automatic scaling and operational simplicity.
 
 **Repository Structure:** Monorepo (as specified in PRD) containing:
+
 - `/app` - Next.js frontend application
 - `/amplify` - Backend resource definitions (auth, data, storage, functions)
 - `/components` - Shared React components
 - Unified deployment and version control
 
 **Service Architecture:** AWS Amplify Gen 2 Serverless with:
+
 - AppSync GraphQL API as the primary service interface
 - Lambda functions for custom business logic (image processing, moderation)
 - DynamoDB for primary data storage with single-table design
@@ -52,6 +57,7 @@ PerfectIt employs a serverless architecture using AWS Amplify Gen 2, delivering 
 - Cognito for authentication and user management
 
 **Primary User Flow:**
+
 1. Users authenticate via Cognito (social or email/password)
 2. Browse/search Perfection Cards through AppSync queries
 3. Upload images to S3 via presigned URLs
@@ -59,6 +65,7 @@ PerfectIt employs a serverless architecture using AWS Amplify Gen 2, delivering 
 5. Receive real-time updates via AppSync subscriptions
 
 **Key Architectural Decisions:**
+
 - **Serverless-first:** Eliminates server management, provides automatic scaling
 - **GraphQL over REST:** Enables precise data fetching, real-time subscriptions
 - **Single-table DynamoDB:** Optimizes for cost and performance at scale
@@ -72,97 +79,100 @@ graph TB
         WEB[Next.js App<br/>React + MUI]
         MOB[Mobile Browser<br/>PWA]
     end
-    
+
     subgraph "AWS Amplify Services"
         AUTH[Amplify Auth<br/>Cognito]
         API[AppSync<br/>GraphQL API]
         STORE[Amplify Storage<br/>S3 + CloudFront]
     end
-    
+
     subgraph "Business Logic"
         LAMBDA1[Image Processor<br/>Lambda]
         LAMBDA2[Content Moderator<br/>Lambda]
         LAMBDA3[Search Indexer<br/>Lambda]
     end
-    
+
     subgraph "Data Layer"
         DDB[DynamoDB<br/>Single Table]
         OPENSEARCH[OpenSearch<br/>Full-text Search]
     end
-    
+
     WEB --> AUTH
     MOB --> AUTH
     WEB --> API
     MOB --> API
     WEB --> STORE
     MOB --> STORE
-    
+
     API --> DDB
     API --> LAMBDA1
     API --> LAMBDA2
     API --> LAMBDA3
-    
+
     STORE --> LAMBDA1
     LAMBDA1 --> DDB
     LAMBDA2 --> DDB
     LAMBDA3 --> OPENSEARCH
-    
+
     DDB --> OPENSEARCH
 ```
 
 ### Architectural and Design Patterns
 
-- **Serverless Architecture:** Using AWS Lambda and managed services - *Rationale:* Aligns with PRD requirement for cost optimization within $50K budget, scales automatically from 0 to 10,000+ users
-- **CQRS (Command Query Responsibility Segregation):** Separate GraphQL resolvers for reads (queries) and writes (mutations) - *Rationale:* Optimizes read performance for browsing/discovery while maintaining data consistency for card creation
-- **Event-Driven Processing:** S3 events trigger Lambda for image processing, DynamoDB streams for search indexing - *Rationale:* Enables asynchronous processing without blocking user interactions
-- **Single-Table Design:** All entities in one DynamoDB table with composite keys - *Rationale:* Reduces costs, improves query performance, simplifies data model as recommended for DynamoDB best practices
-- **Repository Pattern:** Abstract data access through Amplify Data models - *Rationale:* Provides clean separation between business logic and data layer, enables future migration if needed
-- **Optimistic UI Updates:** Client-side state updates before server confirmation - *Rationale:* Provides instant feedback for votes/comments improving perceived performance
-- **Circuit Breaker Pattern:** For external service calls (OpenSearch, image processing) - *Rationale:* Prevents cascade failures and provides graceful degradation
+- **Serverless Architecture:** Using AWS Lambda and managed services - _Rationale:_ Aligns with PRD requirement for cost optimization within $50K budget, scales automatically from 0 to 10,000+ users
+- **CQRS (Command Query Responsibility Segregation):** Separate GraphQL resolvers for reads (queries) and writes (mutations) - _Rationale:_ Optimizes read performance for browsing/discovery while maintaining data consistency for card creation
+- **Event-Driven Processing:** S3 events trigger Lambda for image processing, DynamoDB streams for search indexing - _Rationale:_ Enables asynchronous processing without blocking user interactions
+- **Single-Table Design:** All entities in one DynamoDB table with composite keys - _Rationale:_ Reduces costs, improves query performance, simplifies data model as recommended for DynamoDB best practices
+- **Repository Pattern:** Abstract data access through Amplify Data models - _Rationale:_ Provides clean separation between business logic and data layer, enables future migration if needed
+- **Optimistic UI Updates:** Client-side state updates before server confirmation - _Rationale:_ Provides instant feedback for votes/comments improving perceived performance
+- **Circuit Breaker Pattern:** For external service calls (OpenSearch, image processing) - _Rationale:_ Prevents cascade failures and provides graceful degradation
 
 ## Tech Stack
 
 ### Cloud Infrastructure
+
 - **Provider:** Amazon Web Services (AWS)
 - **Key Services:** Amplify, AppSync, DynamoDB, S3, CloudFront, Cognito, Lambda, OpenSearch
 - **Deployment Regions:** us-east-1 (primary), with CloudFront global edge locations
 
 ### Technology Stack Table
 
-| Category | Technology | Version | Purpose | Rationale |
-|----------|------------|---------|---------|-----------|
-| **Language** | TypeScript | 5.3.3 | Primary development language | Strong typing, excellent tooling, reduces runtime errors |
-| **Runtime** | Node.js | 20.11.0 | JavaScript runtime | LTS version, stable performance, AWS Lambda support |
-| **Frontend Framework** | Next.js | 14.2.0 | React framework with SSR/SSG | App Router, optimal performance, SEO benefits |
-| **UI Library** | React | 18.3.0 | Component library | Industry standard, huge ecosystem, Amplify UI support |
-| **UI Components** | Amplify UI React | 6.1.0 | Connected components | Pre-built auth, storage, data components |
-| **UI Design System** | Material-UI (MUI) | 5.15.0 | Component library | Comprehensive components, theming, accessibility |
-| **Backend Framework** | AWS Amplify Gen 2 | 1.0.0 | Backend infrastructure | Integrated AWS services, type-safe, real-time |
-| **API** | AWS AppSync | Managed | GraphQL API | Real-time subscriptions, managed scaling |
-| **Database** | DynamoDB | Managed | NoSQL database | Serverless, scalable, cost-effective |
-| **Authentication** | AWS Cognito | Managed | User management | Social login, MFA, integrated with Amplify |
-| **Storage** | AWS S3 | Managed | Object storage | Image storage, integrated with CloudFront |
-| **CDN** | CloudFront | Managed | Content delivery | Global edge locations, S3 integration |
-| **Search** | OpenSearch | 2.11 | Full-text search | Advanced search capabilities, DynamoDB integration |
-| **Image Processing** | Sharp | 0.33.2 | Image manipulation | Resize, optimize, format conversion in Lambda |
-| **State Management** | Amplify DataStore | 5.0.0 | Offline-first sync | Conflict resolution, real-time sync |
-| **CSS Framework** | MUI Styling System | 5.15.0 | CSS-in-JS | sx prop, styled components, theme consistency |
-| **Testing** | Jest | 29.7.0 | Test framework | Unit/integration testing, good TS support |
-| **Testing (E2E)** | Playwright | 1.41.0 | E2E testing | Cross-browser, reliable, fast |
-| **Linting** | ESLint | 8.56.0 | Code quality | Catches errors, enforces standards |
-| **Formatting** | Prettier | 3.2.0 | Code formatting | Consistent style, auto-format |
-| **Git Hooks** | Husky | 9.0.0 | Pre-commit hooks | Enforce quality before commit |
-| **Package Manager** | npm | 10.2.0 | Dependency management | Default with Node.js, workspace support |
-| **CI/CD** | Amplify Hosting | Managed | Deployment pipeline | Automatic deployments, preview environments |
-| **Monitoring** | CloudWatch | Managed | Logs and metrics | Integrated with all AWS services |
-| **Tracing** | AWS X-Ray | Managed | Distributed tracing | Performance analysis, debugging |
+| Category               | Technology         | Version | Purpose                      | Rationale                                                |
+| ---------------------- | ------------------ | ------- | ---------------------------- | -------------------------------------------------------- |
+| **Language**           | TypeScript         | 5.3.3   | Primary development language | Strong typing, excellent tooling, reduces runtime errors |
+| **Runtime**            | Node.js            | 20.11.0 | JavaScript runtime           | LTS version, stable performance, AWS Lambda support      |
+| **Frontend Framework** | Next.js            | 14.2.0  | React framework with SSR/SSG | App Router, optimal performance, SEO benefits            |
+| **UI Library**         | React              | 18.3.0  | Component library            | Industry standard, huge ecosystem, Amplify UI support    |
+| **UI Components**      | Amplify UI React   | 6.1.0   | Connected components         | Pre-built auth, storage, data components                 |
+| **UI Design System**   | Material-UI (MUI)  | 5.15.0  | Component library            | Comprehensive components, theming, accessibility         |
+| **Backend Framework**  | AWS Amplify Gen 2  | 1.0.0   | Backend infrastructure       | Integrated AWS services, type-safe, real-time            |
+| **API**                | AWS AppSync        | Managed | GraphQL API                  | Real-time subscriptions, managed scaling                 |
+| **Database**           | DynamoDB           | Managed | NoSQL database               | Serverless, scalable, cost-effective                     |
+| **Authentication**     | AWS Cognito        | Managed | User management              | Social login, MFA, integrated with Amplify               |
+| **Storage**            | AWS S3             | Managed | Object storage               | Image storage, integrated with CloudFront                |
+| **CDN**                | CloudFront         | Managed | Content delivery             | Global edge locations, S3 integration                    |
+| **Search**             | OpenSearch         | 2.11    | Full-text search             | Advanced search capabilities, DynamoDB integration       |
+| **Image Processing**   | Sharp              | 0.33.2  | Image manipulation           | Resize, optimize, format conversion in Lambda            |
+| **State Management**   | Amplify DataStore  | 5.0.0   | Offline-first sync           | Conflict resolution, real-time sync                      |
+| **CSS Framework**      | MUI Styling System | 5.15.0  | CSS-in-JS                    | sx prop, styled components, theme consistency            |
+| **Testing**            | Jest               | 29.7.0  | Test framework               | Unit/integration testing, good TS support                |
+| **Testing (E2E)**      | Playwright         | 1.41.0  | E2E testing                  | Cross-browser, reliable, fast                            |
+| **Linting**            | ESLint             | 8.56.0  | Code quality                 | Catches errors, enforces standards                       |
+| **Formatting**         | Prettier           | 3.2.0   | Code formatting              | Consistent style, auto-format                            |
+| **Git Hooks**          | Husky              | 9.0.0   | Pre-commit hooks             | Enforce quality before commit                            |
+| **Package Manager**    | npm                | 10.2.0  | Dependency management        | Default with Node.js, workspace support                  |
+| **CI/CD**              | Amplify Hosting    | Managed | Deployment pipeline          | Automatic deployments, preview environments              |
+| **Monitoring**         | CloudWatch         | Managed | Logs and metrics             | Integrated with all AWS services                         |
+| **Tracing**            | AWS X-Ray          | Managed | Distributed tracing          | Performance analysis, debugging                          |
 
 ## Data Models
 
 ### User
+
 **Purpose:** Represents authenticated users with profile information and reputation tracking
 
 **Key Attributes:**
+
 - id: String (UUID) - Unique identifier from Cognito
 - username: String - Unique display name
 - email: String - Contact email (private)
@@ -175,6 +185,7 @@ graph TB
 - socialLinks: Map - Social media profiles
 
 **Relationships:**
+
 - Has many PerfectionCards (author)
 - Has many Comments
 - Has many Votes
@@ -182,9 +193,11 @@ graph TB
 - Has many UserFollows (followers/following)
 
 ### PerfectionCard
+
 **Purpose:** Core content entity containing improvement instructions for specific items
 
 **Key Attributes:**
+
 - id: String (UUID) - Unique identifier
 - title: String - Card title (max 100 chars)
 - description: String - Brief summary (max 500 chars)
@@ -205,15 +218,18 @@ graph TB
 - status: Enum (Draft|Published|Flagged|Removed)
 
 **Relationships:**
+
 - Belongs to User (author)
 - Has many Comments
 - Has many Votes
 - Belongs to many Collections
 
 ### Comment
+
 **Purpose:** User discussions and feedback on Perfection Cards
 
 **Key Attributes:**
+
 - id: String (UUID)
 - content: String - Comment text (max 1000 chars)
 - cardId: String - Reference to PerfectionCard
@@ -225,15 +241,18 @@ graph TB
 - status: Enum (Active|Flagged|Removed)
 
 **Relationships:**
+
 - Belongs to PerfectionCard
 - Belongs to User (author)
 - Has many Comments (replies)
 - Has many CommentVotes
 
 ### Vote
+
 **Purpose:** Track user votes on cards and comments
 
 **Key Attributes:**
+
 - id: String (Composite: userId#targetId)
 - userId: String - Voter reference
 - targetId: String - Card or Comment ID
@@ -242,13 +261,16 @@ graph TB
 - createdAt: DateTime
 
 **Relationships:**
+
 - Belongs to User
 - Belongs to PerfectionCard or Comment
 
 ### Collection
+
 **Purpose:** User-created groups of saved Perfection Cards
 
 **Key Attributes:**
+
 - id: String (UUID)
 - name: String - Collection title
 - description: String - Optional description
@@ -260,14 +282,17 @@ graph TB
 - updatedAt: DateTime
 
 **Relationships:**
+
 - Belongs to User (owner)
 - Has many PerfectionCards
 - Has many CollectionFollowers
 
 ### Category
+
 **Purpose:** Hierarchical organization structure for browsing
 
 **Key Attributes:**
+
 - id: String - URL-safe identifier
 - name: String - Display name
 - parentId: String - Parent category (optional)
@@ -277,15 +302,18 @@ graph TB
 - sortOrder: Number - Display ordering
 
 **Relationships:**
+
 - Has many PerfectionCards
 - Has many Categories (subcategories)
 
 ## Components
 
 ### Frontend Application
+
 **Responsibility:** Next.js application providing the user interface, server-side rendering, and client-side interactivity
 
 **Key Interfaces:**
+
 - HTTP/HTTPS endpoints for page routes
 - GraphQL client connection to AppSync API
 - Amplify Auth integration for authentication flows
@@ -296,9 +324,11 @@ graph TB
 **Technology Stack:** Next.js 14.2, React 18.3, TypeScript, MUI 5.15, Amplify UI React 6.1, Tailwind CSS
 
 ### GraphQL API Layer
+
 **Responsibility:** AppSync managed GraphQL API providing data operations, real-time subscriptions, and authorization
 
 **Key Interfaces:**
+
 - GraphQL schema with Queries, Mutations, and Subscriptions
 - Type-safe resolvers for all data operations
 - WebSocket connections for real-time updates
@@ -309,9 +339,11 @@ graph TB
 **Technology Stack:** AWS AppSync (managed), GraphQL schema defined in Amplify
 
 ### Authentication Service
+
 **Responsibility:** Cognito user pool managing user registration, authentication, and authorization
 
 **Key Interfaces:**
+
 - User registration and verification endpoints
 - OAuth 2.0 flows for social login (Google, Facebook)
 - JWT token generation and validation
@@ -322,9 +354,11 @@ graph TB
 **Technology Stack:** AWS Cognito (managed), Amplify Auth configuration
 
 ### Data Storage Layer
+
 **Responsibility:** DynamoDB tables storing all application data with single-table design pattern
 
 **Key Interfaces:**
+
 - Single table with composite keys for all entities
 - Global Secondary Indexes (GSIs) for query patterns
 - DynamoDB Streams for change events
@@ -335,9 +369,11 @@ graph TB
 **Technology Stack:** AWS DynamoDB (managed), single-table design
 
 ### Image Processing Service
+
 **Responsibility:** Lambda function processing uploaded images for optimization and multiple sizes
 
 **Key Interfaces:**
+
 - S3 event trigger on image upload
 - Image resize to multiple dimensions (thumbnail, medium, large)
 - Format optimization (WebP conversion)
@@ -348,9 +384,11 @@ graph TB
 **Technology Stack:** Node.js Lambda, Sharp 0.33.2, TypeScript
 
 ### Content Moderation Service
+
 **Responsibility:** Lambda function reviewing flagged content and automating moderation workflows
 
 **Key Interfaces:**
+
 - AppSync resolver integration for flag operations
 - Moderation queue management
 - Automated content analysis rules
@@ -361,9 +399,11 @@ graph TB
 **Technology Stack:** Node.js Lambda, TypeScript, AWS SDK
 
 ### Search Service
+
 **Responsibility:** Lambda function managing OpenSearch indexing and search operations
 
 **Key Interfaces:**
+
 - DynamoDB Streams consumer for index updates
 - Search query API endpoint
 - Index management operations
@@ -374,9 +414,11 @@ graph TB
 **Technology Stack:** Node.js Lambda, OpenSearch client, TypeScript
 
 ### Media Storage
+
 **Responsibility:** S3 bucket and CloudFront CDN storing and delivering images
 
 **Key Interfaces:**
+
 - Presigned URL generation for uploads
 - CloudFront distribution for global delivery
 - Image access policies and CORS configuration
@@ -394,42 +436,42 @@ graph LR
         NEXT[Next.js App]
         UI[UI Components]
     end
-    
+
     subgraph "API Gateway"
         APPSYNC[AppSync GraphQL]
         SUB[Subscriptions]
     end
-    
+
     subgraph "Business Logic"
         IMG[Image Processor]
         MOD[Moderator]
         SEARCH[Search Indexer]
     end
-    
+
     subgraph "Data & Storage"
         DDB[(DynamoDB)]
         S3[(S3 Bucket)]
         OS[(OpenSearch)]
     end
-    
+
     subgraph "Auth"
         COG[Cognito]
     end
-    
+
     NEXT --> APPSYNC
     NEXT --> COG
     NEXT --> S3
-    
+
     APPSYNC --> DDB
     APPSYNC --> IMG
     APPSYNC --> MOD
-    
+
     S3 --> IMG
     IMG --> DDB
-    
+
     DDB --> SEARCH
     SEARCH --> OS
-    
+
     APPSYNC --> SUB
     SUB --> NEXT
 ```
@@ -437,6 +479,7 @@ graph LR
 ## External APIs
 
 ### Google OAuth API
+
 - **Purpose:** Enable user authentication via Google accounts
 - **Documentation:** https://developers.google.com/identity/protocols/oauth2
 - **Base URL(s):** https://accounts.google.com/o/oauth2/v2/auth
@@ -444,6 +487,7 @@ graph LR
 - **Rate Limits:** 10,000 requests per day (free tier)
 
 **Key Endpoints Used:**
+
 - `GET /auth` - Initial authorization request
 - `POST /token` - Exchange authorization code for tokens
 - `GET /userinfo` - Retrieve user profile information
@@ -451,6 +495,7 @@ graph LR
 **Integration Notes:** Handled entirely through Cognito Identity Providers configuration. Requires Google Cloud Console project with OAuth 2.0 credentials.
 
 ### Facebook Login API
+
 - **Purpose:** Enable user authentication via Facebook accounts
 - **Documentation:** https://developers.facebook.com/docs/facebook-login
 - **Base URL(s):** https://www.facebook.com/v18.0/dialog/oauth
@@ -458,6 +503,7 @@ graph LR
 - **Rate Limits:** 200 calls per hour per user
 
 **Key Endpoints Used:**
+
 - `GET /dialog/oauth` - Initial authorization dialog
 - `GET /oauth/access_token` - Exchange code for access token
 - `GET /me` - Retrieve user profile data
@@ -513,16 +559,16 @@ sequenceDiagram
     L->>L: Resize & optimize
     L->>S: Save processed images
     L->>D: Update image metadata
-    
+
     U->>N: Fill card details
     N->>A: Mutation: createCard
     A->>D: Save card data
     D->>A: Confirm save
     A->>N: Return card ID
-    
+
     D->>L: DynamoDB Stream event
     L->>O: Index card for search
-    
+
     N->>U: Show success & redirect
 ```
 
@@ -548,12 +594,12 @@ sequenceDiagram
         A->>O: Full-text search
         O->>A: Return matches
     end
-    
+
     A->>N: Return results
     N->>CF: Request card images
     CF->>N: Deliver cached images
     N->>U: Display card grid
-    
+
     U->>N: Click card
     N->>A: Query: getCard
     A->>D: Fetch full details
@@ -575,24 +621,24 @@ sequenceDiagram
     participant Sub as Subscriptions
 
     Note over U2,N2: Viewing same card
-    
+
     U1->>N1: Click upvote
     N1->>N1: Optimistic update
     N1->>A: Mutation: voteCard
     A->>D: Save vote
     D->>A: Confirm
     A->>Sub: Publish update
-    
+
     Sub->>N1: Confirm vote
     Sub->>N2: Notify vote change
     N2->>U2: Update vote count
-    
+
     U1->>N1: Write comment
     N1->>A: Mutation: addComment
     A->>D: Save comment
     D->>A: Confirm
     A->>Sub: Publish comment
-    
+
     Sub->>N2: New comment
     N2->>U2: Display comment
 ```
@@ -612,7 +658,7 @@ sequenceDiagram
     N->>A: Mutation: flagContent
     A->>D: Save flag record
     A->>M: Trigger moderation
-    
+
     M->>D: Check flag count
     alt Threshold Exceeded
         M->>D: Update status to "Under Review"
@@ -623,7 +669,7 @@ sequenceDiagram
     else Below Threshold
         M->>D: Log flag only
     end
-    
+
     D->>A: Return status
     A->>N: Confirm flag
     N->>U: Show acknowledgment
@@ -655,11 +701,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner(),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read'])
+      allow.guest().to(['read']),
     ])
-    .secondaryIndexes((index) => [
-      index('username')
-    ]),
+    .secondaryIndexes((index) => [index('username')]),
 
   PerfectionCard: a
     .model({
@@ -667,13 +711,13 @@ const schema = a.schema({
       description: a.string().required(),
       imageUrls: a.url().array().required(),
       instructions: a.string().array().required(),
-      materials: a.json(),  // Array of Material objects
+      materials: a.json(), // Array of Material objects
       tools: a.string().array(),
       category: a.string().required(),
       tags: a.string().array(),
       difficulty: a.enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT']),
-      estimatedTime: a.integer(),  // in minutes
-      estimatedCost: a.float(),    // in USD
+      estimatedTime: a.integer(), // in minutes
+      estimatedCost: a.float(), // in USD
       viewCount: a.integer().default(0),
       voteScore: a.integer().default(0),
       status: a.enum(['DRAFT', 'PUBLISHED', 'FLAGGED', 'REMOVED']),
@@ -686,11 +730,11 @@ const schema = a.schema({
       allow.owner(),
       allow.authenticated().to(['read']),
       allow.guest().to(['read']),
-      allow.group('moderator').to(['update', 'delete'])
+      allow.group('moderator').to(['update', 'delete']),
     ])
     .secondaryIndexes((index) => [
       index('category').sortKeys(['createdAt']).queryField('cardsByCategory'),
-      index('authorId').sortKeys(['createdAt']).queryField('cardsByAuthor')
+      index('authorId').sortKeys(['createdAt']).queryField('cardsByAuthor'),
     ]),
 
   Comment: a
@@ -700,7 +744,7 @@ const schema = a.schema({
       card: a.belongsTo('PerfectionCard', 'cardId'),
       authorId: a.id().required(),
       author: a.belongsTo('User', 'authorId'),
-      parentId: a.id(),  // For nested replies
+      parentId: a.id(), // For nested replies
       voteCount: a.integer().default(0),
       status: a.enum(['ACTIVE', 'FLAGGED', 'REMOVED']),
     })
@@ -708,11 +752,11 @@ const schema = a.schema({
       allow.owner(),
       allow.authenticated().to(['read']),
       allow.guest().to(['read']),
-      allow.group('moderator').to(['delete'])
+      allow.group('moderator').to(['delete']),
     ])
     .secondaryIndexes((index) => [
       index('cardId').sortKeys(['createdAt']),
-      index('parentId').sortKeys(['createdAt'])
+      index('parentId').sortKeys(['createdAt']),
     ]),
 
   Vote: a
@@ -723,13 +767,10 @@ const schema = a.schema({
       targetType: a.enum(['CARD', 'COMMENT']),
       voteType: a.enum(['UP', 'DOWN']),
     })
-    .authorization((allow) => [
-      allow.owner(),
-      allow.authenticated().to(['read'])
-    ])
+    .authorization((allow) => [allow.owner(), allow.authenticated().to(['read'])])
     .secondaryIndexes((index) => [
       index('targetId').sortKeys(['userId']),
-      index('userId').sortKeys(['targetId'])
+      index('userId').sortKeys(['targetId']),
     ]),
 
   Collection: a
@@ -745,12 +786,12 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner(),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read']).when((c) => c.isPublic.eq(true))
+      allow
+        .guest()
+        .to(['read'])
+        .when((c) => c.isPublic.eq(true)),
     ])
-    .secondaryIndexes((index) => [
-      index('ownerId'),
-      index('isPublic').sortKeys(['followerCount'])
-    ]),
+    .secondaryIndexes((index) => [index('ownerId'), index('isPublic').sortKeys(['followerCount'])]),
 
   Category: a
     .model({
@@ -764,11 +805,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group('admin'),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read'])
+      allow.guest().to(['read']),
     ])
-    .secondaryIndexes((index) => [
-      index('parentId').sortKeys(['sortOrder'])
-    ]),
+    .secondaryIndexes((index) => [index('parentId').sortKeys(['sortOrder'])]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -785,6 +824,7 @@ export const data = defineData({
 ```
 
 This TypeScript schema definition:
+
 - Automatically generates the GraphQL schema
 - Provides type-safe client code generation
 - Defines authorization rules inline
@@ -800,58 +840,64 @@ PerfectIt uses a single-table design pattern in DynamoDB for optimal performance
 **Table Name:** `perfectit-main`
 
 **Primary Key Structure:**
+
 - **Partition Key (PK):** Entity type and ID composite
 - **Sort Key (SK):** Entity-specific sorting/relationship data
 
 ### Entity Patterns
 
-| Entity | PK | SK | GSI1PK | GSI1SK | GSI2PK | GSI2SK |
-|--------|----|----|--------|--------|--------|--------|
-| User | `USER#<userId>` | `PROFILE` | `USERNAME#<username>` | `PROFILE` | - | - |
-| PerfectionCard | `CARD#<cardId>` | `METADATA` | `CAT#<category>` | `CREATED#<timestamp>` | `USER#<authorId>` | `CREATED#<timestamp>` |
-| Comment | `CARD#<cardId>` | `COMMENT#<timestamp>#<commentId>` | `USER#<authorId>` | `COMMENT#<timestamp>` | - | - |
-| Vote | `VOTE#<userId>#<targetId>` | `VOTE` | `TARGET#<targetId>` | `VOTE#<timestamp>` | - | - |
-| Collection | `USER#<userId>` | `COLLECTION#<collectionId>` | `COLLECTION#<collectionId>` | `METADATA` | - | - |
-| CardInCollection | `COLLECTION#<collectionId>` | `CARD#<cardId>` | - | - | - | - |
-| Category | `CAT#<categoryId>` | `METADATA` | `PARENT#<parentId>` | `SORT#<sortOrder>` | - | - |
+| Entity           | PK                          | SK                                | GSI1PK                      | GSI1SK                | GSI2PK            | GSI2SK                |
+| ---------------- | --------------------------- | --------------------------------- | --------------------------- | --------------------- | ----------------- | --------------------- |
+| User             | `USER#<userId>`             | `PROFILE`                         | `USERNAME#<username>`       | `PROFILE`             | -                 | -                     |
+| PerfectionCard   | `CARD#<cardId>`             | `METADATA`                        | `CAT#<category>`            | `CREATED#<timestamp>` | `USER#<authorId>` | `CREATED#<timestamp>` |
+| Comment          | `CARD#<cardId>`             | `COMMENT#<timestamp>#<commentId>` | `USER#<authorId>`           | `COMMENT#<timestamp>` | -                 | -                     |
+| Vote             | `VOTE#<userId>#<targetId>`  | `VOTE`                            | `TARGET#<targetId>`         | `VOTE#<timestamp>`    | -                 | -                     |
+| Collection       | `USER#<userId>`             | `COLLECTION#<collectionId>`       | `COLLECTION#<collectionId>` | `METADATA`            | -                 | -                     |
+| CardInCollection | `COLLECTION#<collectionId>` | `CARD#<cardId>`                   | -                           | -                     | -                 | -                     |
+| Category         | `CAT#<categoryId>`          | `METADATA`                        | `PARENT#<parentId>`         | `SORT#<sortOrder>`    | -                 | -                     |
 
 ### Global Secondary Indexes (GSIs)
 
 **GSI1: Category and Username Index**
+
 - Supports queries by category, username lookups
 - Access patterns: Browse cards by category, find user by username
 
 **GSI2: Author Index**
+
 - Supports queries for all content by a specific author
 - Access patterns: User's cards, user's comments
 
 **GSI3: Time-based Queries**
+
 - PK: `DATE#<YYYY-MM-DD>`, SK: `CREATED#<timestamp>#<entityId>`
 - Access patterns: Trending content, recent cards, daily analytics
 
 **GSI4: Search Support**
+
 - PK: `SEARCH#<searchableField>`, SK: `CARD#<cardId>`
 - Limited text search before OpenSearch integration
 
 **GSI5: Vote Aggregation**
+
 - PK: `VOTETYPE#<type>`, SK: `SCORE#<score>#<targetId>`
 - Access patterns: Top voted cards, controversial content
 
 ### Access Patterns
 
-| Access Pattern | Index | Query |
-|---------------|-------|-------|
-| Get user profile | Main | PK=`USER#<userId>`, SK=`PROFILE` |
-| Get user by username | GSI1 | PK=`USERNAME#<username>` |
-| List cards by category | GSI1 | PK=`CAT#<category>`, SK begins_with `CREATED#` |
-| List cards by author | GSI2 | PK=`USER#<authorId>`, SK begins_with `CREATED#` |
-| Get card details | Main | PK=`CARD#<cardId>`, SK=`METADATA` |
-| Get card comments | Main | PK=`CARD#<cardId>`, SK begins_with `COMMENT#` |
-| Get user collections | Main | PK=`USER#<userId>`, SK begins_with `COLLECTION#` |
-| Get collection cards | Main | PK=`COLLECTION#<collectionId>`, SK begins_with `CARD#` |
-| Check user vote | Main | PK=`VOTE#<userId>#<targetId>` |
-| Get trending cards | GSI3 | PK=`DATE#<today>`, limit 20 |
-| Get top voted | GSI5 | PK=`VOTETYPE#CARD`, SK begins_with `SCORE#`, ScanIndexForward=false |
+| Access Pattern         | Index | Query                                                               |
+| ---------------------- | ----- | ------------------------------------------------------------------- |
+| Get user profile       | Main  | PK=`USER#<userId>`, SK=`PROFILE`                                    |
+| Get user by username   | GSI1  | PK=`USERNAME#<username>`                                            |
+| List cards by category | GSI1  | PK=`CAT#<category>`, SK begins_with `CREATED#`                      |
+| List cards by author   | GSI2  | PK=`USER#<authorId>`, SK begins_with `CREATED#`                     |
+| Get card details       | Main  | PK=`CARD#<cardId>`, SK=`METADATA`                                   |
+| Get card comments      | Main  | PK=`CARD#<cardId>`, SK begins_with `COMMENT#`                       |
+| Get user collections   | Main  | PK=`USER#<userId>`, SK begins_with `COLLECTION#`                    |
+| Get collection cards   | Main  | PK=`COLLECTION#<collectionId>`, SK begins_with `CARD#`              |
+| Check user vote        | Main  | PK=`VOTE#<userId>#<targetId>`                                       |
+| Get trending cards     | GSI3  | PK=`DATE#<today>`, limit 20                                         |
+| Get top voted          | GSI5  | PK=`VOTETYPE#CARD`, SK begins_with `SCORE#`, ScanIndexForward=false |
 
 ### DynamoDB Streams Configuration
 
@@ -864,6 +910,7 @@ PerfectIt uses a single-table design pattern in DynamoDB for optimal performance
 ### Data Types and Attributes
 
 Common attributes stored in item body:
+
 ```json
 {
   "PK": "CARD#123",
@@ -917,53 +964,53 @@ perfectit/
 │   │   ├── resource.ts          # DynamoDB models & GraphQL schema
 │   │   └── custom-resolvers/    # Custom business logic resolvers
 │   ├── functions/                # Lambda functions
-│   │   ├── image-processor/     
+│   │   ├── image-processor/
 │   │   │   ├── handler.ts      # Image processing logic
-│   │   │   ├── package.json    
-│   │   │   └── tsconfig.json   
-│   │   ├── content-moderator/   
+│   │   │   ├── package.json
+│   │   │   └── tsconfig.json
+│   │   ├── content-moderator/
 │   │   │   └── handler.ts      # Moderation logic
-│   │   ├── search-indexer/      
+│   │   ├── search-indexer/
 │   │   │   └── handler.ts      # OpenSearch sync
-│   │   └── post-confirmation/   
+│   │   └── post-confirmation/
 │   │       └── handler.ts      # User profile creation
 │   ├── storage/                  # S3 configuration
 │   │   └── resource.ts          # Bucket policies & triggers
 │   └── backend.ts               # Main backend configuration
 ├── app/                          # Next.js App Router
 │   ├── (auth)/                   # Auth group route
-│   │   ├── login/               
-│   │   │   └── page.tsx        
-│   │   ├── register/            
-│   │   │   └── page.tsx        
+│   │   ├── login/
+│   │   │   └── page.tsx
+│   │   ├── register/
+│   │   │   └── page.tsx
 │   │   └── layout.tsx          # Auth layout wrapper
 │   ├── (dashboard)/              # Authenticated routes
-│   │   ├── cards/               
-│   │   │   ├── [id]/           
+│   │   ├── cards/
+│   │   │   ├── [id]/
 │   │   │   │   └── page.tsx    # Card detail view
-│   │   │   ├── create/         
+│   │   │   ├── create/
 │   │   │   │   └── page.tsx    # Card creation wizard
 │   │   │   └── page.tsx        # Cards listing
-│   │   ├── profile/             
-│   │   │   ├── [username]/     
+│   │   ├── profile/
+│   │   │   ├── [username]/
 │   │   │   │   └── page.tsx    # Public profile
-│   │   │   └── edit/           
+│   │   │   └── edit/
 │   │   │       └── page.tsx    # Edit profile
-│   │   ├── collections/         
+│   │   ├── collections/
 │   │   │   └── page.tsx        # User collections
 │   │   └── layout.tsx           # Dashboard layout with nav
 │   ├── api/                      # API routes (if needed)
-│   │   └── health/              
+│   │   └── health/
 │   │       └── route.ts        # Health check endpoint
 │   ├── globals.css              # Global styles and MUI overrides
 │   ├── layout.tsx               # Root layout
 │   └── page.tsx                 # Landing page
 ├── components/                   # Shared React components
 │   ├── cards/                   # Card-related components
-│   │   ├── CardGrid.tsx        
-│   │   ├── CardDetail.tsx      
-│   │   ├── CardForm.tsx        
-│   │   └── CardPreview.tsx     
+│   │   ├── CardGrid.tsx
+│   │   ├── CardDetail.tsx
+│   │   ├── CardForm.tsx
+│   │   └── CardPreview.tsx
 │   ├── ui/                      # UI components
 │   │   ├── Navigation.tsx      # MUI AppBar navigation
 │   │   ├── Drawer.tsx          # MUI Drawer menu
@@ -973,8 +1020,8 @@ perfectit/
 │   │   ├── Authenticator.tsx   # Amplify Authenticator wrapper
 │   │   └── AuthGuard.tsx       # Route protection
 │   └── common/                  # Common components
-│       ├── LoadingSpinner.tsx  
-│       ├── ErrorBoundary.tsx   
+│       ├── LoadingSpinner.tsx
+│       ├── ErrorBoundary.tsx
 │       └── SEO.tsx             # SEO meta tags
 ├── hooks/                        # Custom React hooks
 │   ├── useAuth.ts               # Authentication hook
@@ -991,14 +1038,14 @@ perfectit/
 │       └── formatting.ts       # Data formatting
 ├── public/                       # Static assets
 │   ├── images/                  # Static images
-│   └── favicon.ico             
+│   └── favicon.ico
 ├── types/                        # TypeScript types
 │   ├── amplify/                 # Generated Amplify types
 │   │   └── API.ts              # GraphQL types (generated)
 │   └── index.d.ts              # Custom type definitions
 ├── .env.local                   # Local environment variables
 ├── .eslintrc.json               # ESLint configuration
-├── .gitignore                   
+├── .gitignore
 ├── .prettierrc                  # Prettier configuration
 ├── amplify.yml                  # Amplify hosting build spec
 ├── next.config.js               # Next.js configuration
@@ -1010,28 +1057,33 @@ perfectit/
 ### Key Directory Responsibilities
 
 **`/amplify`** - Backend infrastructure as code
+
 - All AWS resource definitions
 - Lambda function code
 - Data models and API schema
 - Keep backend logic separate from frontend
 
 **`/app`** - Next.js application routes
+
 - File-based routing with App Router
 - Route groups for organization
 - Server components by default
 - Client components marked with 'use client'
 
 **`/components`** - Reusable UI components
+
 - Organized by feature/domain
 - Mix of Amplify UI and MUI components
 - All components are TypeScript
 
 **`/lib`** - Core utilities and configuration
+
 - Amplify client/server setup
 - MUI theme configuration
 - Shared utility functions
 
 **`/types`** - TypeScript definitions
+
 - Generated GraphQL types from Amplify
 - Custom application types
 - Third-party library augmentations
@@ -1075,6 +1127,7 @@ npm run dev
 ### Development Standards
 
 #### Code Style Guidelines
+
 - **TypeScript:** Strict mode enabled, no implicit any
 - **React:** Functional components with hooks only
 - **Naming:** camelCase for variables/functions, PascalCase for components/types
@@ -1082,6 +1135,7 @@ npm run dev
 - **Imports:** Absolute imports using `@/` alias for src directory
 
 #### Styling Approach (MUI-Only)
+
 - **Primary Method:** MUI's `sx` prop for component-specific styles
 - **Reusable Styles:** `styled()` API from `@mui/material/styles`
 - **Theme Customization:** Centralized theme in `lib/theme/theme.ts`
@@ -1089,6 +1143,7 @@ npm run dev
 - **Benefits:** Type-safe styles, consistent theming, smaller bundle size
 
 Example styling patterns:
+
 ```typescript
 // Using sx prop
 <Box sx={{ p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
@@ -1103,18 +1158,20 @@ const StyledCard = styled(Card)(({ theme }) => ({
 }));
 
 // Theme-aware responsive styles
-<Typography sx={{ 
+<Typography sx={{
   fontSize: { xs: '1rem', md: '1.25rem' },
   color: 'text.primary'
 }}>
 ```
 
 #### Git Workflow
+
 - **Branch naming:** `feature/`, `bugfix/`, `hotfix/` prefixes
 - **Commit messages:** Conventional commits format
 - **PR process:** Requires review, passes CI checks, up-to-date with main
 
 #### Code Review Checklist
+
 - [ ] TypeScript types properly defined
 - [ ] No console.log statements
 - [ ] Error handling implemented
@@ -1128,6 +1185,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 ### Client-Side Error Handling
 
 #### Global Error Boundary
+
 ```typescript
 // components/common/ErrorBoundary.tsx
 class ErrorBoundary extends Component {
@@ -1140,6 +1198,7 @@ class ErrorBoundary extends Component {
 ```
 
 #### GraphQL Error Handling
+
 - Optimistic updates with rollback on failure
 - Retry logic with exponential backoff
 - User-friendly error messages
@@ -1148,18 +1207,21 @@ class ErrorBoundary extends Component {
 ### Server-Side Resilience
 
 #### Lambda Function Patterns
+
 - **Timeout handling:** 30-second max, alert before timeout
 - **Retry configuration:** DLQ for failed invocations
 - **Error classification:** Transient vs permanent failures
 - **Circuit breaker:** For external service calls
 
 #### Database Resilience
+
 - **DynamoDB:** Auto-scaling, on-demand billing for unpredictable loads
 - **Read replicas:** Global tables for disaster recovery
 - **Backup strategy:** Point-in-time recovery enabled
 - **Throttling handling:** Exponential backoff in SDK
 
 #### API Gateway Protection
+
 - **Rate limiting:** 1000 requests per second per user
 - **Throttling:** Burst limit of 5000 requests
 - **WAF rules:** SQL injection, XSS protection
@@ -1167,13 +1229,13 @@ class ErrorBoundary extends Component {
 
 ### Failure Scenarios & Recovery
 
-| Scenario | Detection | Response | Recovery |
-|----------|-----------|----------|----------|
-| Lambda timeout | CloudWatch alarm | Retry with backoff | Investigate slow query |
-| DynamoDB throttle | SDK exception | Exponential backoff | Scale capacity |
-| S3 upload failure | Client error | Retry with presigned URL | Check CORS/permissions |
-| Auth token expired | 401 response | Refresh token | Re-authenticate |
-| GraphQL subscription drop | Connection error | Auto-reconnect | Restore subscription |
+| Scenario                  | Detection        | Response                 | Recovery               |
+| ------------------------- | ---------------- | ------------------------ | ---------------------- |
+| Lambda timeout            | CloudWatch alarm | Retry with backoff       | Investigate slow query |
+| DynamoDB throttle         | SDK exception    | Exponential backoff      | Scale capacity         |
+| S3 upload failure         | Client error     | Retry with presigned URL | Check CORS/permissions |
+| Auth token expired        | 401 response     | Refresh token            | Re-authenticate        |
+| GraphQL subscription drop | Connection error | Auto-reconnect           | Restore subscription   |
 
 ## Testing Strategy
 
@@ -1194,12 +1256,14 @@ class ErrorBoundary extends Component {
 **Framework:** Jest + React Testing Library
 
 **Coverage targets:**
+
 - Components: 80% coverage
 - Utilities: 95% coverage
 - Hooks: 90% coverage
 - Lambda functions: 85% coverage
 
 **Key test files:**
+
 ```
 components/cards/CardGrid.test.tsx
 hooks/useAuth.test.ts
@@ -1212,6 +1276,7 @@ lib/utils/validation.test.ts
 **Framework:** Jest + MSW (Mock Service Worker)
 
 **Test scenarios:**
+
 - GraphQL query/mutation flows
 - Authentication workflows
 - File upload pipelines
@@ -1222,12 +1287,14 @@ lib/utils/validation.test.ts
 **Framework:** Playwright
 
 **Critical paths:**
+
 - User registration and login
 - Create and publish Perfection Card
 - Search and filter cards
 - Vote and comment interactions
 
 **Test environments:**
+
 - Local: Against sandbox backend
 - Staging: Pre-production validation
 - Production: Smoke tests only
@@ -1237,6 +1304,7 @@ lib/utils/validation.test.ts
 **Tools:** Lighthouse CI, WebPageTest
 
 **Metrics:**
+
 - Core Web Vitals (LCP < 2.5s, FID < 100ms, CLS < 0.1)
 - Time to Interactive < 3.5s
 - Bundle size < 200KB (initial)
@@ -1246,21 +1314,24 @@ lib/utils/validation.test.ts
 ### Authentication & Authorization
 
 #### Multi-Factor Authentication
+
 - **Required for:** Admin users, high-value actions
 - **Methods:** SMS, TOTP apps
 - **Implementation:** Cognito MFA configuration
 
 #### Role-Based Access Control
+
 ```typescript
 enum UserRole {
   GUEST = 'guest',
   USER = 'authenticated',
   MODERATOR = 'moderator',
-  ADMIN = 'admin'
+  ADMIN = 'admin',
 }
 ```
 
 #### Field-Level Authorization
+
 - GraphQL field resolvers check permissions
 - Amplify authorization directives
 - Row-level security in DynamoDB
@@ -1268,11 +1339,13 @@ enum UserRole {
 ### Data Protection
 
 #### Encryption
+
 - **At rest:** DynamoDB encryption, S3 SSE-S3
 - **In transit:** TLS 1.3 for all connections
 - **Sensitive data:** Field-level encryption for PII
 
 #### Data Privacy
+
 - **PII handling:** Minimal collection, purpose limitation
 - **Data retention:** 90-day deletion for inactive accounts
 - **GDPR compliance:** Right to deletion, data portability
@@ -1281,16 +1354,19 @@ enum UserRole {
 ### Application Security
 
 #### Input Validation
+
 - **Client-side:** Form validation, type checking
 - **Server-side:** GraphQL schema validation
 - **Sanitization:** XSS prevention, SQL injection protection
 
 #### Content Security
+
 - **Image validation:** File type, size limits, virus scanning
 - **Content moderation:** Automated flagging, manual review
 - **Rate limiting:** Per-user, per-IP limits
 
 #### Infrastructure Security
+
 - **VPC:** Private subnets for Lambda functions
 - **Security groups:** Least privilege network access
 - **IAM roles:** Minimal permissions per service
@@ -1307,17 +1383,18 @@ enum UserRole {
 
 ### Performance Targets
 
-| Metric | Target | Current | Notes |
-|--------|--------|---------|-------|
-| Page Load Time | < 2s | TBD | Measured at p95 |
-| API Response Time | < 200ms | TBD | GraphQL queries |
-| Image Load Time | < 1s | TBD | Via CloudFront |
-| Search Response | < 500ms | TBD | OpenSearch queries |
-| Concurrent Users | 10,000 | TBD | Per PRD requirement |
+| Metric            | Target  | Current | Notes               |
+| ----------------- | ------- | ------- | ------------------- |
+| Page Load Time    | < 2s    | TBD     | Measured at p95     |
+| API Response Time | < 200ms | TBD     | GraphQL queries     |
+| Image Load Time   | < 1s    | TBD     | Via CloudFront      |
+| Search Response   | < 500ms | TBD     | OpenSearch queries  |
+| Concurrent Users  | 10,000  | TBD     | Per PRD requirement |
 
 ### Optimization Strategies
 
 #### Frontend Optimization
+
 - **Code splitting:** Route-based chunking
 - **Image optimization:** Next.js Image component, WebP format
 - **Caching strategy:** SWR for data fetching
@@ -1325,6 +1402,7 @@ enum UserRole {
 - **Prefetching:** Link prefetch for likely navigation
 
 #### Backend Optimization
+
 - **Query optimization:** DataLoader pattern for N+1 prevention
 - **Caching layers:** CloudFront, API Gateway cache
 - **Database optimization:** Composite keys, sparse indexes
@@ -1333,16 +1411,19 @@ enum UserRole {
 #### Scaling Strategy
 
 **Phase 1 (0-1,000 users):**
+
 - On-demand DynamoDB
 - Default Lambda concurrency
 - CloudFront with 1-hour cache
 
 **Phase 2 (1,000-5,000 users):**
+
 - DynamoDB auto-scaling
 - Reserved Lambda concurrency
 - ElastiCache for session data
 
 **Phase 3 (5,000-10,000 users):**
+
 - Provisioned DynamoDB capacity
 - Lambda@Edge for personalization
 - Global Accelerator for latency
@@ -1374,16 +1455,17 @@ graph LR
 
 ### Environment Strategy
 
-| Environment | Purpose | Data | Access |
-|------------|---------|------|--------|
-| Local | Development | Mock data | Developers |
-| Sandbox | Integration testing | Test data | Dev team |
-| Staging | Pre-production validation | Prod-like data | QA team |
-| Production | Live system | Real data | Public |
+| Environment | Purpose                   | Data           | Access     |
+| ----------- | ------------------------- | -------------- | ---------- |
+| Local       | Development               | Mock data      | Developers |
+| Sandbox     | Integration testing       | Test data      | Dev team   |
+| Staging     | Pre-production validation | Prod-like data | QA team    |
+| Production  | Live system               | Real data      | Public     |
 
 ### Deployment Process
 
 #### Amplify Hosting Configuration
+
 ```yaml
 version: 1
 frontend:
@@ -1404,6 +1486,7 @@ frontend:
 ```
 
 #### Rollback Strategy
+
 - **Blue-green deployment:** Zero-downtime updates
 - **Canary releases:** 10% traffic to new version
 - **Instant rollback:** One-click revert in Amplify Console
@@ -1412,6 +1495,7 @@ frontend:
 ### Operational Procedures
 
 #### Incident Response
+
 1. **Detection:** CloudWatch alarm triggers
 2. **Triage:** On-call engineer assesses severity
 3. **Mitigation:** Apply immediate fix or rollback
@@ -1419,6 +1503,7 @@ frontend:
 5. **Post-mortem:** Document lessons learned
 
 #### Maintenance Windows
+
 - **Scheduled:** Tuesday 2-4 AM EST
 - **Notifications:** 48-hour advance notice
 - **Types:** Security patches, infrastructure updates
@@ -1428,6 +1513,7 @@ frontend:
 ### Metrics & KPIs
 
 #### Business Metrics
+
 - Daily/Monthly Active Users
 - Card creation rate
 - User engagement (votes, comments)
@@ -1435,6 +1521,7 @@ frontend:
 - User retention (7-day, 30-day)
 
 #### Technical Metrics
+
 - API latency (p50, p95, p99)
 - Error rates by service
 - Lambda cold start frequency
@@ -1459,16 +1546,18 @@ graph TB
 ### Logging Strategy
 
 #### Log Levels
+
 ```typescript
 enum LogLevel {
-  ERROR = 'error',   // System errors, exceptions
-  WARN = 'warn',     // Degraded performance
-  INFO = 'info',     // Business events
-  DEBUG = 'debug'    // Development only
+  ERROR = 'error', // System errors, exceptions
+  WARN = 'warn', // Degraded performance
+  INFO = 'info', // Business events
+  DEBUG = 'debug', // Development only
 }
 ```
 
 #### Structured Logging
+
 ```json
 {
   "timestamp": "2025-01-15T10:30:00Z",
@@ -1486,23 +1575,25 @@ enum LogLevel {
 
 ### Alerting Rules
 
-| Alert | Condition | Severity | Response |
-|-------|-----------|----------|----------|
-| High Error Rate | > 5% errors | Critical | Page on-call |
-| API Latency | p95 > 1s | Warning | Investigate |
-| DynamoDB Throttle | Any throttles | Warning | Scale capacity |
-| Lambda Timeout | > 10/minute | Critical | Check function |
-| Low Disk Space | < 10% free | Warning | Clean logs |
+| Alert             | Condition     | Severity | Response       |
+| ----------------- | ------------- | -------- | -------------- |
+| High Error Rate   | > 5% errors   | Critical | Page on-call   |
+| API Latency       | p95 > 1s      | Warning  | Investigate    |
+| DynamoDB Throttle | Any throttles | Warning  | Scale capacity |
+| Lambda Timeout    | > 10/minute   | Critical | Check function |
+| Low Disk Space    | < 10% free    | Warning  | Clean logs     |
 
 ### Dashboards
 
 #### Operations Dashboard
+
 - Service health status
 - Real-time error rates
 - API performance metrics
 - Infrastructure utilization
 
 #### Business Dashboard
+
 - User growth trends
 - Content creation metrics
 - Engagement analytics
@@ -1513,6 +1604,7 @@ enum LogLevel {
 ### Technical Debt Management
 
 #### Current Technical Debt
+
 - [ ] Implement full-text search with OpenSearch
 - [ ] Add Redis caching layer
 - [ ] Migrate to Amplify Gen 2 custom resolvers
@@ -1520,6 +1612,7 @@ enum LogLevel {
 - [ ] Add comprehensive E2E test suite
 
 #### Debt Reduction Strategy
+
 - 20% of sprint capacity for tech debt
 - Quarterly debt review sessions
 - Prioritize by risk and impact
@@ -1527,12 +1620,14 @@ enum LogLevel {
 ### Future Architecture Evolution
 
 #### Phase 2 Features (6-12 months)
+
 - **Mobile app:** React Native with shared components
 - **AI features:** Content recommendations, auto-tagging
 - **Video support:** Tutorial videos with transcoding
 - **Marketplace:** Premium content monetization
 
 #### Phase 3 Scale (12+ months)
+
 - **Microservices:** Break out high-traffic services
 - **Multi-region:** Active-active deployment
 - **Event sourcing:** Complete audit trail
@@ -1541,13 +1636,17 @@ enum LogLevel {
 ### Migration Paths
 
 #### Database Migration
+
 If DynamoDB limits are reached:
+
 1. **Option A:** Move to Aurora Serverless v2
 2. **Option B:** Implement Vitess for horizontal scaling
 3. **Option C:** Hybrid with DynamoDB + PostgreSQL
 
 #### Search Migration
+
 When OpenSearch becomes costly:
+
 1. **Option A:** Algolia for managed search
 2. **Option B:** Elasticsearch on EC2
 3. **Option C:** Typesense for self-hosted
@@ -1555,16 +1654,19 @@ When OpenSearch becomes costly:
 ### Disaster Recovery
 
 #### RPO/RTO Targets
+
 - **Recovery Point Objective:** 1 hour
 - **Recovery Time Objective:** 4 hours
 
 #### Backup Strategy
+
 - **DynamoDB:** Continuous backups, cross-region replication
 - **S3:** Versioning enabled, cross-region replication
 - **Code:** Multi-region Git repositories
 - **Configuration:** Infrastructure as Code in Git
 
 #### DR Procedures
+
 1. **Detection:** Automated health checks
 2. **Declaration:** Incident commander decision
 3. **Failover:** DNS update to backup region
@@ -1576,6 +1678,7 @@ When OpenSearch becomes costly:
 This architecture document provides a comprehensive blueprint for building PerfectIt as a scalable, serverless visual knowledge-sharing platform. The architecture leverages AWS Amplify Gen 2 and managed services to minimize operational overhead while supporting growth from startup to 10,000+ users within the $50K budget constraint.
 
 Key architectural decisions prioritize:
+
 - **Developer productivity** through the Amplify framework
 - **Cost efficiency** via serverless, pay-per-use model
 - **User experience** with real-time updates and optimized performance

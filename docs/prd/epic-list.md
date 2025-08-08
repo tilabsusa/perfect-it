@@ -14,4 +14,3 @@ Implement social features including voting, commenting, and user collections to 
 
 **Epic 5: User Profiles & Reputation System**
 Develop user profiles, expertise tags, and reputation scoring based on community contributions and engagement.
-

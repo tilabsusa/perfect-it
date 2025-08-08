@@ -24,11 +24,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner(),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read'])
+      allow.guest().to(['read']),
     ])
-    .secondaryIndexes((index) => [
-      index('username')
-    ]),
+    .secondaryIndexes((index) => [index('username')]),
 
   PerfectionCard: a
     .model({
@@ -36,13 +34,13 @@ const schema = a.schema({
       description: a.string().required(),
       imageUrls: a.url().array().required(),
       instructions: a.string().array().required(),
-      materials: a.json(),  // Array of Material objects
+      materials: a.json(), // Array of Material objects
       tools: a.string().array(),
       category: a.string().required(),
       tags: a.string().array(),
       difficulty: a.enum(['BEGINNER', 'INTERMEDIATE', 'EXPERT']),
-      estimatedTime: a.integer(),  // in minutes
-      estimatedCost: a.float(),    // in USD
+      estimatedTime: a.integer(), // in minutes
+      estimatedCost: a.float(), // in USD
       viewCount: a.integer().default(0),
       voteScore: a.integer().default(0),
       status: a.enum(['DRAFT', 'PUBLISHED', 'FLAGGED', 'REMOVED']),
@@ -55,11 +53,11 @@ const schema = a.schema({
       allow.owner(),
       allow.authenticated().to(['read']),
       allow.guest().to(['read']),
-      allow.group('moderator').to(['update', 'delete'])
+      allow.group('moderator').to(['update', 'delete']),
     ])
     .secondaryIndexes((index) => [
       index('category').sortKeys(['createdAt']).queryField('cardsByCategory'),
-      index('authorId').sortKeys(['createdAt']).queryField('cardsByAuthor')
+      index('authorId').sortKeys(['createdAt']).queryField('cardsByAuthor'),
     ]),
 
   Comment: a
@@ -69,7 +67,7 @@ const schema = a.schema({
       card: a.belongsTo('PerfectionCard', 'cardId'),
       authorId: a.id().required(),
       author: a.belongsTo('User', 'authorId'),
-      parentId: a.id(),  // For nested replies
+      parentId: a.id(), // For nested replies
       voteCount: a.integer().default(0),
       status: a.enum(['ACTIVE', 'FLAGGED', 'REMOVED']),
     })
@@ -77,11 +75,11 @@ const schema = a.schema({
       allow.owner(),
       allow.authenticated().to(['read']),
       allow.guest().to(['read']),
-      allow.group('moderator').to(['delete'])
+      allow.group('moderator').to(['delete']),
     ])
     .secondaryIndexes((index) => [
       index('cardId').sortKeys(['createdAt']),
-      index('parentId').sortKeys(['createdAt'])
+      index('parentId').sortKeys(['createdAt']),
     ]),
 
   Vote: a
@@ -92,13 +90,10 @@ const schema = a.schema({
       targetType: a.enum(['CARD', 'COMMENT']),
       voteType: a.enum(['UP', 'DOWN']),
     })
-    .authorization((allow) => [
-      allow.owner(),
-      allow.authenticated().to(['read'])
-    ])
+    .authorization((allow) => [allow.owner(), allow.authenticated().to(['read'])])
     .secondaryIndexes((index) => [
       index('targetId').sortKeys(['userId']),
-      index('userId').sortKeys(['targetId'])
+      index('userId').sortKeys(['targetId']),
     ]),
 
   Collection: a
@@ -114,12 +109,12 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner(),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read']).when((c) => c.isPublic.eq(true))
+      allow
+        .guest()
+        .to(['read'])
+        .when((c) => c.isPublic.eq(true)),
     ])
-    .secondaryIndexes((index) => [
-      index('ownerId'),
-      index('isPublic').sortKeys(['followerCount'])
-    ]),
+    .secondaryIndexes((index) => [index('ownerId'), index('isPublic').sortKeys(['followerCount'])]),
 
   Category: a
     .model({
@@ -133,11 +128,9 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.group('admin'),
       allow.authenticated().to(['read']),
-      allow.guest().to(['read'])
+      allow.guest().to(['read']),
     ])
-    .secondaryIndexes((index) => [
-      index('parentId').sortKeys(['sortOrder'])
-    ]),
+    .secondaryIndexes((index) => [index('parentId').sortKeys(['sortOrder'])]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -154,9 +147,9 @@ export const data = defineData({
 ```
 
 This TypeScript schema definition:
+
 - Automatically generates the GraphQL schema
 - Provides type-safe client code generation
 - Defines authorization rules inline
 - Creates DynamoDB tables with appropriate indexes
 - Handles relationships between models
-

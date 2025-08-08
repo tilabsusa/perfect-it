@@ -1,11 +1,13 @@
 # Story 1.0: User Prerequisites and External Account Setup
 
 ## Story Statement
+
 As a project owner,  
 I want to complete all external account setups and configurations before development begins,  
 so that the development team has all necessary access and credentials to implement the authentication and infrastructure.
 
 ## Priority: CRITICAL - BLOCKER
+
 This story MUST be completed before any development work begins. All subsequent stories depend on these prerequisites.
 
 ## User Responsibilities (Human-Only Tasks)
@@ -13,10 +15,12 @@ This story MUST be completed before any development work begins. All subsequent 
 ### Required Accounts to Create
 
 #### 1. AWS Account Setup
+
 **Responsibility:** USER ONLY  
 **Timeline:** Before Story 1.1
 
 **Steps:**
+
 1. Navigate to https://aws.amazon.com/
 2. Click "Create an AWS Account"
 3. Provide email, password, and account name
@@ -27,17 +31,20 @@ This story MUST be completed before any development work begins. All subsequent 
 8. Sign in to AWS Console to verify access
 
 **Deliverables to Development Team:**
+
 - AWS Account ID (12-digit number)
 - Root account email (for emergency access only)
 - Confirmation that billing alerts are configured
 
 #### 2. Google OAuth Application Setup
+
 **Responsibility:** USER ONLY  
 **Timeline:** Before Story 1.2
 
 **Prerequisites:** Google account with access to Google Cloud Console
 
 **Steps:**
+
 1. Navigate to https://console.cloud.google.com/
 2. Create a new project or select existing:
    - Click "Select a Project" → "New Project"
@@ -71,17 +78,20 @@ This story MUST be completed before any development work begins. All subsequent 
        - https://your-amplify-domain.amplifyapp.com/oauth/callback
 
 **Deliverables to Development Team:**
+
 - Google Client ID
 - Google Client Secret (store securely)
 - Confirmation of authorized redirect URIs
 
 #### 3. Facebook OAuth Application Setup
+
 **Responsibility:** USER ONLY  
 **Timeline:** Before Story 1.2
 
 **Prerequisites:** Facebook account with developer access
 
 **Steps:**
+
 1. Navigate to https://developers.facebook.com/
 2. Click "My Apps" → "Create App"
 3. Select "Consumer" as app type
@@ -107,16 +117,20 @@ This story MUST be completed before any development work begins. All subsequent 
    - Save Changes
 
 **Deliverables to Development Team:**
+
 - Facebook App ID
 - Facebook App Secret (store securely)
 - Confirmation of redirect URIs configured
 
 #### 4. Domain Name Registration (Optional but Recommended)
+
 **Responsibility:** USER ONLY  
 **Timeline:** Before Story 1.5
 
 **Options:**
+
 1. **AWS Route 53** (Recommended for integration):
+
    - Navigate to Route 53 in AWS Console
    - Click "Register domain"
    - Search for desired domain
@@ -128,6 +142,7 @@ This story MUST be completed before any development work begins. All subsequent 
    - Note: Will need to configure DNS to point to AWS later
 
 **Deliverables to Development Team:**
+
 - Registered domain name
 - DNS management access (if external registrar)
 - Confirmation of registrar used
@@ -157,11 +172,13 @@ DOMAIN_NAME=perfectit.com
 ### After User Completes Prerequisites
 
 1. **Verify AWS Account Access:**
+
    - Confirm AWS CLI can authenticate
    - Verify necessary service quotas
    - Set up IAM user for Amplify
 
 2. **Configure OAuth in Amplify:**
+
    - Add OAuth configuration to amplify/auth/resource.ts
    - Configure callback URLs in Amplify
    - Test OAuth flow in development
@@ -174,6 +191,7 @@ DOMAIN_NAME=perfectit.com
 ## Acceptance Criteria
 
 ### User Completion Checklist:
+
 - [ ] AWS account created and activated
 - [ ] AWS Account ID documented
 - [ ] Google OAuth app created with Client ID and Secret
@@ -184,6 +202,7 @@ DOMAIN_NAME=perfectit.com
 - [ ] Credentials shared with development team securely
 
 ### Developer Validation Checklist:
+
 - [ ] AWS CLI can authenticate successfully
 - [ ] OAuth credentials are valid (test API calls)
 - [ ] Redirect URIs match development/production URLs
@@ -202,13 +221,13 @@ DOMAIN_NAME=perfectit.com
 
 ## Risks and Mitigations
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| OAuth app approval delays | HIGH | Create apps early, use development mode initially |
-| Wrong redirect URIs | HIGH | Document all environment URLs upfront |
-| Lost credentials | HIGH | Use password manager, enable 2FA |
-| AWS billing surprises | MEDIUM | Set up billing alerts at $5, $10, $25 |
-| Domain unavailable | LOW | Have 3-5 backup domain options ready |
+| Risk                      | Impact | Mitigation                                        |
+| ------------------------- | ------ | ------------------------------------------------- |
+| OAuth app approval delays | HIGH   | Create apps early, use development mode initially |
+| Wrong redirect URIs       | HIGH   | Document all environment URLs upfront             |
+| Lost credentials          | HIGH   | Use password manager, enable 2FA                  |
+| AWS billing surprises     | MEDIUM | Set up billing alerts at $5, $10, $25             |
+| Domain unavailable        | LOW    | Have 3-5 backup domain options ready              |
 
 ## Support Resources
 

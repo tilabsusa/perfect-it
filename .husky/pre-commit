@@ -2,3 +2,6 @@ npm run lint
 
 # Check only source code directories
 npx prettier --check "app/**/*.{js,jsx,ts,tsx,css}" "lib/**/*.{js,jsx,ts,tsx}" "amplify/**/*.{js,ts}"
+
+# Run tests for changed files (optional - can be commented out if too slow)
+# npx jest --bail --findRelatedTests $(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(js|jsx|ts|tsx)$' | tr '\n' ' ')
