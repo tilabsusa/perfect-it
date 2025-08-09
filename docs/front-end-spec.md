@@ -31,9 +31,10 @@ This document defines the user experience goals, information architecture, user 
 5. **Accessible Craftsmanship** - WCAG AA compliance ensures everyone can perfect their items
 
 ### Change Log
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-08-08 | 1.0 | Initial UI/UX Specification | UX Expert |
+
+| Date       | Version | Description                 | Author    |
+| ---------- | ------- | --------------------------- | --------- |
+| 2025-08-08 | 1.0     | Initial UI/UX Specification | UX Expert |
 
 ## Information Architecture (IA)
 
@@ -46,7 +47,7 @@ graph TD
     A --> D[My Cards]
     A --> E[Collections]
     A --> F[Community]
-    
+
     B --> B1[Browse Categories]
     B --> B2[Search Results]
     B --> B3[Trending Cards]
@@ -55,7 +56,7 @@ graph TD
     B1 --> B1b[Crafts]
     B1 --> B1c[Home Repair]
     B1 --> B1d[Garden]
-    
+
     C --> C1[New Perfection Card]
     C --> C2[My Drafts]
     C --> C3[Creation Guide]
@@ -63,15 +64,15 @@ graph TD
     C1 --> C1b[Add Details]
     C1 --> C1c[Instructions]
     C1 --> C1d[Preview & Publish]
-    
+
     D --> D1[Published Cards]
     D --> D2[Draft Cards]
     D --> D3[Card Analytics]
-    
+
     E --> E1[Saved Cards]
     E --> E2[Custom Collections]
     E --> E3[Shared Collections]
-    
+
     F --> F1[Top Contributors]
     F --> F2[Expert Directory]
     F --> F3[Guidelines]
@@ -82,42 +83,45 @@ graph TD
 **Layout Framework:** Implementing MUI Dashboard template with fixed app bar, collapsible drawer navigation, and responsive main content area - exactly matching the MUI dashboard example structure.
 
 **App Bar (Top Header):**
+
 - Fixed position spanning full width (64px height desktop, 56px mobile)
 - Left: Menu icon button (hamburger) to toggle drawer
 - Center-left: PerfectIt logo/wordmark
 - Center-right: Global search field with icon (Amplify UI SearchField component)
-- Right section: 
+- Right section:
   - Notification icon badge (IconButton with Badge)
   - User avatar (Amplify UI Avatar) with dropdown menu
 - Uses MUI AppBar with Toolbar component
 
 **Left Navigation Drawer (Permanent on Desktop, Temporary on Mobile):**
+
 - **Desktop:** Permanent drawer (240px width) with dividers between sections
 - **Mobile/Tablet:** Temporary drawer with overlay, triggered by menu button
 - **Content Structure:**
+
   ```
   [User Section]
   - Avatar + Name + Reputation Score
   - View Profile link
-  
+
   [Divider]
-  
+
   [Primary Navigation]
   - Dashboard (GridView icon)
-  - Discover (Explore icon) 
+  - Discover (Explore icon)
   - Create New (AddCircle icon)
   - My Cards (Folder icon)
   - Collections (Bookmarks icon)
-  
+
   [Divider]
-  
+
   [Community]
   - Top Contributors (EmojiEvents icon)
   - Expert Directory (VerifiedUser icon)
   - Guidelines (Article icon)
-  
+
   [Divider]
-  
+
   [Bottom Section - Sticky]
   - Settings (Settings icon)
   - Help (HelpOutline icon)
@@ -125,6 +129,7 @@ graph TD
   ```
 
 **Main Content Area:**
+
 - Uses MUI Container with responsive maxWidth
 - Padding: 24px (desktop), 16px (mobile)
 - Flex grow to fill available space
@@ -132,6 +137,7 @@ graph TD
 - Content wrapped in Paper components where appropriate
 
 **Responsive Breakpoints:**
+
 - **Desktop (lg: 1200px+):** Permanent drawer, full search bar
 - **Tablet (md: 900px-1199px):** Permanent mini drawer, condensed search
 - **Mobile (xs/sm: <900px):** Temporary drawer, search icon only
@@ -142,7 +148,8 @@ graph TD
 
 **User Goal:** Document and share an improvement technique for an item
 
-**Entry Points:** 
+**Entry Points:**
+
 - Dashboard "Create New Card" CTA button
 - Left drawer "Create New" navigation item
 - Empty state "Create your first card" button
@@ -150,6 +157,7 @@ graph TD
 **Success Criteria:** Published Perfection Card visible in user's profile and discoverable by others
 
 #### Flow Diagram
+
 ```mermaid
 graph TD
     A[User clicks Create New] --> B{Authenticated?}
@@ -177,6 +185,7 @@ graph TD
 ```
 
 #### Edge Cases & Error Handling:
+
 - Image upload fails: Show retry with error message, allow URL input as fallback
 - Network interruption: Auto-save draft every 30 seconds, show recovery option
 - Duplicate detection: Warn if similar card exists, allow continuation
@@ -189,6 +198,7 @@ graph TD
 **User Goal:** Find relevant Perfection Cards and save them for future reference
 
 **Entry Points:**
+
 - Dashboard trending cards section
 - Discover menu item in drawer
 - Search bar in app header
@@ -196,6 +206,7 @@ graph TD
 **Success Criteria:** User finds relevant card and saves to collection within 60 seconds
 
 #### Flow Diagram
+
 ```mermaid
 graph TD
     A[User enters Discover] --> B{Browse or Search?}
@@ -220,6 +231,7 @@ graph TD
 ```
 
 #### Edge Cases & Error Handling:
+
 - No search results: Show suggestions and popular cards
 - Slow image loading: Progressive loading with blur-up effect
 - Collection limit reached: Prompt to upgrade or manage collections
@@ -232,6 +244,7 @@ graph TD
 **User Goal:** Interact with Perfection Cards through voting and commenting
 
 **Entry Points:**
+
 - Card detail view
 - Activity feed on dashboard
 - Notification about comment reply
@@ -239,6 +252,7 @@ graph TD
 **Success Criteria:** User successfully votes and comments, sees real-time update
 
 #### Flow Diagram
+
 ```mermaid
 graph TD
     A[View Card Detail] --> B[See Vote Buttons]
@@ -260,6 +274,7 @@ graph TD
 ```
 
 #### Edge Cases & Error Handling:
+
 - Rate limiting: Show cooldown message if voting too frequently
 - Comment moderation: Queue for review if flagged keywords detected
 - Network offline: Cache vote locally, sync when connection restored
@@ -274,9 +289,11 @@ graph TD
 ### Key Screen Layouts
 
 #### Dashboard (Homepage)
+
 **Purpose:** Provide personalized overview and quick access to primary actions
 
 **Key Elements:**
+
 - Welcome banner with user's name and reputation score
 - "Create New Card" prominent CTA button (MUI Fab or Button)
 - Trending Cards carousel (horizontal scroll, 4-6 visible)
@@ -288,9 +305,11 @@ graph TD
 **Design File Reference:** Dashboard_Desktop_v1, Dashboard_Mobile_v1
 
 #### Perfection Card Detail View
+
 **Purpose:** Display complete card information and enable community interaction
 
 **Key Elements:**
+
 - Hero image with fullscreen expand option (Amplify UI StorageImage)
 - Title, author info with expertise badges
 - Vote buttons and count (prominent placement)
@@ -303,9 +322,11 @@ graph TD
 **Design File Reference:** CardDetail_Desktop_v1, CardDetail_Mobile_v1
 
 #### Card Creation Wizard
+
 **Purpose:** Guide users through structured card creation process
 
 **Key Elements:**
+
 - MUI Stepper component showing 6 steps
 - Step 1: Amplify UI FileUploader with drag-drop zone
 - Step 2-5: Form fields with inline validation
@@ -318,9 +339,11 @@ graph TD
 **Design File Reference:** CreateWizard_AllSteps_v1
 
 #### Discover/Browse Page
+
 **Purpose:** Enable exploration and filtering of Perfection Cards
 
 **Key Elements:**
+
 - Filter sidebar (collapsible on mobile)
 - Sort dropdown (newest, popular, trending)
 - Amplify UI Collection grid (responsive columns)
@@ -338,9 +361,11 @@ graph TD
 ### Core Components
 
 #### PerfectionCard Component
+
 **Purpose:** Display card preview in grids and lists throughout the application
 
-**Variants:** 
+**Variants:**
+
 - Grid view (square aspect ratio with overlay)
 - List view (horizontal layout with metadata)
 - Mini view (dashboard widgets)
@@ -351,9 +376,11 @@ graph TD
 **Usage Guidelines:** Always use Amplify UI StorageImage for images. Include vote count and save button on hover. Maintain 16:9 aspect ratio for images.
 
 #### VoteButton Component
+
 **Purpose:** Enable upvoting/downvoting with real-time updates
 
 **Variants:**
+
 - Inline (card grids)
 - Prominent (detail view)
 - Compact (comments)
@@ -363,9 +390,11 @@ graph TD
 **Usage Guidelines:** Always pair upvote/downvote. Show count between buttons. Use optimistic updates with rollback on error.
 
 #### CollectionSelector Component
+
 **Purpose:** Allow users to save cards to collections
 
 **Variants:**
+
 - Dropdown menu
 - Modal with checkboxes
 - Quick save button
@@ -375,9 +404,11 @@ graph TD
 **Usage Guidelines:** Show existing collections first. Include "Create New" option. Indicate if card already in collection.
 
 #### ExpertiseBadge Component
+
 **Purpose:** Display user expertise and verification status
 
 **Variants:**
+
 - Small (inline with username)
 - Medium (profile cards)
 - Large (profile header)
@@ -387,9 +418,11 @@ graph TD
 **Usage Guidelines:** Use MUI Chip with custom colors. Include tooltip with endorsement count. Link to user profile on click.
 
 #### FilterPanel Component
+
 **Purpose:** Provide filtering options for browse/search pages
 
 **Variants:**
+
 - Sidebar (desktop)
 - Bottom sheet (mobile)
 - Horizontal pills (simple filters)
@@ -401,107 +434,125 @@ graph TD
 ## Branding & Style Guide
 
 ### Visual Identity
+
 **Brand Guidelines:** PerfectIt brand emphasizes precision, craftsmanship, and community expertise
 
 ### Color Palette
-| Color Type | Hex Code | Usage |
-|------------|----------|--------|
-| Primary | #D2691E | Main CTAs, primary buttons, active states |
-| Secondary | #8B4513 | Secondary actions, hover states |
-| Accent | #FF8C00 | Highlights, badges, notifications |
-| Success | #4CAF50 | Positive feedback, save confirmations |
-| Warning | #FF9800 | Cautions, draft status |
-| Error | #F44336 | Errors, delete actions |
-| Neutral | #757575, #E0E0E0, #F5F5F5 | Text, borders, backgrounds |
+
+| Color Type | Hex Code                  | Usage                                     |
+| ---------- | ------------------------- | ----------------------------------------- |
+| Primary    | #D2691E                   | Main CTAs, primary buttons, active states |
+| Secondary  | #8B4513                   | Secondary actions, hover states           |
+| Accent     | #FF8C00                   | Highlights, badges, notifications         |
+| Success    | #4CAF50                   | Positive feedback, save confirmations     |
+| Warning    | #FF9800                   | Cautions, draft status                    |
+| Error      | #F44336                   | Errors, delete actions                    |
+| Neutral    | #757575, #E0E0E0, #F5F5F5 | Text, borders, backgrounds                |
 
 ### Typography
 
 #### Font Families
+
 - **Primary:** Roboto (Google Font) - Clean, readable, works across devices
 - **Secondary:** Roboto Slab - For headings and emphasis
 - **Monospace:** Roboto Mono - For measurements, time estimates
 
 #### Type Scale
+
 | Element | Size | Weight | Line Height |
-|---------|------|--------|-------------|
-| H1 | 32px | 500 | 1.2 |
-| H2 | 24px | 500 | 1.3 |
-| H3 | 20px | 500 | 1.4 |
-| Body | 16px | 400 | 1.5 |
-| Small | 14px | 400 | 1.4 |
+| ------- | ---- | ------ | ----------- |
+| H1      | 32px | 500    | 1.2         |
+| H2      | 24px | 500    | 1.3         |
+| H3      | 20px | 500    | 1.4         |
+| Body    | 16px | 400    | 1.5         |
+| Small   | 14px | 400    | 1.4         |
 
 ### Iconography
+
 **Icon Library:** Material Icons (MUI default) for consistency
 
-**Usage Guidelines:** 
+**Usage Guidelines:**
+
 - Use outlined variants for navigation
 - Filled variants for active states
 - Two-tone for decorative elements
 - Maintain 24px default size, 20px for dense layouts
 
 ### Spacing & Layout
+
 **Grid System:** 12-column responsive grid (MUI Grid v2)
 
 **Spacing Scale:** 8px base unit (8, 16, 24, 32, 48, 64)
+
 - Tight: 8px (within components)
-- Default: 16px (between related elements)  
+- Default: 16px (between related elements)
 - Comfortable: 24px (between sections)
 - Spacious: 32px+ (major sections)
 
 ## Accessibility Requirements
 
 ### Compliance Target
+
 **Standard:** WCAG 2.1 Level AA
 
 ### Key Requirements
 
 **Visual:**
+
 - Color contrast ratios: Minimum 4.5:1 for normal text, 3:1 for large text
 - Focus indicators: Visible outline with 3:1 contrast ratio against background
 - Text sizing: Base font 16px minimum, user scalable up to 200%
 
 **Interaction:**
+
 - Keyboard navigation: All interactive elements accessible via Tab key, logical tab order
 - Screen reader support: Proper ARIA labels, roles, and descriptions
 - Touch targets: Minimum 44x44px for mobile, 24x24px with adequate spacing on desktop
 
 **Content:**
+
 - Alternative text: Descriptive alt text for all Perfection Card images
 - Heading structure: Logical h1-h6 hierarchy, no skipped levels
 - Form labels: All inputs with associated labels or aria-label
 
 ### Testing Strategy
+
 Automated testing with axe-core, manual keyboard navigation testing, screen reader testing with NVDA/JAWS, color contrast validation with Chrome DevTools
 
 ## Responsiveness Strategy
 
 ### Breakpoints
-| Breakpoint | Min Width | Max Width | Target Devices |
-|------------|-----------|-----------|----------------|
-| Mobile | 0px | 599px | Phones |
-| Tablet | 600px | 959px | Tablets, small laptops |
-| Desktop | 960px | 1279px | Laptops, desktops |
-| Wide | 1280px | - | Large monitors |
+
+| Breakpoint | Min Width | Max Width | Target Devices         |
+| ---------- | --------- | --------- | ---------------------- |
+| Mobile     | 0px       | 599px     | Phones                 |
+| Tablet     | 600px     | 959px     | Tablets, small laptops |
+| Desktop    | 960px     | 1279px    | Laptops, desktops      |
+| Wide       | 1280px    | -         | Large monitors         |
 
 ### Adaptation Patterns
 
-**Layout Changes:** 
+**Layout Changes:**
+
 - Mobile: Single column, stacked elements, full-width cards
 - Tablet: 2-column grid for cards, collapsible sidebar
 - Desktop: 3-4 column grid, permanent sidebar
 - Wide: 5-6 column grid, expanded content area
 
 **Navigation Changes:**
+
 - Mobile: Hamburger menu, bottom tab bar for key actions
 - Tablet: Mini drawer with icons only
 - Desktop+: Full drawer with labels
 
 **Content Priority:**
+
 - Mobile: Image first, essential info only, progressive disclosure
 - Tablet: Image + summary, key metadata visible
 - Desktop: Full preview with all metadata
 
 **Interaction Changes:**
+
 - Mobile: Touch-optimized, swipe gestures, bottom sheets
 - Tablet: Mixed touch/mouse, hover states on capable devices
 - Desktop: Full hover interactions, keyboard shortcuts
@@ -509,12 +560,14 @@ Automated testing with axe-core, manual keyboard navigation testing, screen read
 ## Animation & Micro-interactions
 
 ### Motion Principles
+
 - Purpose-driven: Every animation serves a functional purpose
 - Fast and smooth: 200-300ms for most transitions
 - Natural easing: Use Material Design standard easing curves
 - Respect preferences: Honor prefers-reduced-motion settings
 
 ### Key Animations
+
 - **Card hover:** Scale 1.02, elevation increase, 200ms, ease-out
 - **Page transitions:** Fade in, 300ms, ease-in-out
 - **Drawer toggle:** Slide, 225ms, Material standard easing
@@ -525,11 +578,13 @@ Automated testing with axe-core, manual keyboard navigation testing, screen read
 ## Performance Considerations
 
 ### Performance Goals
+
 - **Page Load:** First Contentful Paint < 1.5s, Time to Interactive < 3s
 - **Interaction Response:** < 100ms for user input feedback
 - **Animation FPS:** Consistent 60fps for all animations
 
 ### Design Strategies
+
 - Lazy load images below the fold using Amplify UI StorageImage
 - Progressive image loading with blur-up placeholders
 - Virtual scrolling for long lists (>50 items)
@@ -541,6 +596,7 @@ Automated testing with axe-core, manual keyboard navigation testing, screen read
 ## Next Steps
 
 ### Immediate Actions
+
 1. Create MUI theme configuration file with brand colors and typography
 2. Configure Amplify UI ThemeProvider with custom theme matching MUI brand colors
 3. Build component library in Storybook for development
@@ -551,12 +607,15 @@ Automated testing with axe-core, manual keyboard navigation testing, screen read
 ### Theme Integration Strategy
 
 #### MUI as Primary Theme System
+
 Material-UI provides the primary theming system for the application, with custom theme defined in `lib/theme/theme.ts`.
 
 #### Amplify UI Component Theming
+
 For Amplify UI components (primarily the Authenticator), apply consistent theming via:
 
 1. **ThemeProvider Wrapper:**
+
 ```typescript
 import { ThemeProvider } from '@aws-amplify/ui-react';
 import { defaultTheme } from '@aws-amplify/ui-react';
@@ -592,7 +651,8 @@ const customTheme = {
 ```
 
 2. **Accessing Theme Values:**
-Use the `useTheme()` hook within components:
+   Use the `useTheme()` hook within components:
+
 ```typescript
 import { useTheme } from '@aws-amplify/ui-react';
 
@@ -603,13 +663,15 @@ function CustomComponent() {
 ```
 
 3. **Color Palette Alignment:**
-Ensure Amplify UI theme colors match MUI palette:
+   Ensure Amplify UI theme colors match MUI palette:
+
 - Primary: #D2691E (matches MUI primary.main)
 - Secondary: #8B4513 (matches MUI secondary.main)
 - Error: #F44336 (matches MUI error.main)
 - Success: #4CAF50 (matches MUI success.main)
 
 ### Design Handoff Checklist
+
 - ✓ All user flows documented
 - ✓ Component inventory complete
 - ✓ Accessibility requirements defined

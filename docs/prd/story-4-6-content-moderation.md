@@ -1,11 +1,13 @@
 # Story 4.6: Content Moderation System
 
 ## Story Statement
+
 As a platform owner,  
 I want an automated and manual content moderation system,  
 so that we can maintain content quality, prevent abuse, and ensure a safe environment for all users while complying with legal requirements.
 
 ## Priority: HIGH
+
 This story is critical for platform safety and should be implemented before public launch.
 
 ## Moderation Architecture
@@ -27,13 +29,18 @@ User Content → Auto-Moderation → Risk Score → Decision
 ### Part A: Content Moderation Data Model
 
 #### Step 1: Define Moderation Schema
+
 **File:** `amplify/data/moderation-schema.graphql`
 
 ```graphql
-type ModerationReport @model @auth(rules: [
-  { allow: private, operations: [read] }
-  { allow: groups, groups: ["moderator", "admin"] }
-]) {
+type ModerationReport
+  @model
+  @auth(
+    rules: [
+      { allow: private, operations: [read] }
+      { allow: groups, groups: ["moderator", "admin"] }
+    ]
+  ) {
   id: ID!
   contentId: String! @index(name: "byContent")
   contentType: ContentType!
@@ -54,10 +61,14 @@ type ModerationReport @model @auth(rules: [
   updatedAt: AWSDateTime!
 }
 
-type ContentFlag @model @auth(rules: [
-  { allow: private, operations: [read] }
-  { allow: groups, groups: ["moderator", "admin"] }
-]) {
+type ContentFlag
+  @model
+  @auth(
+    rules: [
+      { allow: private, operations: [read] }
+      { allow: groups, groups: ["moderator", "admin"] }
+    ]
+  ) {
   id: ID!
   contentId: String! @index(name: "byContent")
   contentType: ContentType!
@@ -69,9 +80,7 @@ type ContentFlag @model @auth(rules: [
   createdAt: AWSDateTime!
 }
 
-type BannedContent @model @auth(rules: [
-  { allow: groups, groups: ["moderator", "admin"] }
-]) {
+type BannedContent @model @auth(rules: [{ allow: groups, groups: ["moderator", "admin"] }]) {
   id: ID!
   pattern: String! @index(name: "byPattern")
   type: BanType! # "word", "phrase", "regex", "image_hash"
@@ -82,9 +91,7 @@ type BannedContent @model @auth(rules: [
   createdAt: AWSDateTime!
 }
 
-type ModeratorAction @model @auth(rules: [
-  { allow: groups, groups: ["moderator", "admin"] }
-]) {
+type ModeratorAction @model @auth(rules: [{ allow: groups, groups: ["moderator", "admin"] }]) {
   id: ID!
   moderatorId: String! @index(name: "byModerator")
   contentId: String! @index(name: "byContent")
@@ -177,14 +184,15 @@ enum ActionType {
 ### Part B: Automated Content Moderation
 
 #### Step 2: Text Moderation with AWS Comprehend
+
 **File:** `amplify/backend/function/text-moderation/handler.ts`
 
 ```typescript
-import { 
-  ComprehendClient, 
+import {
+  ComprehendClient,
   DetectToxicContentCommand,
   DetectPiiEntitiesCommand,
-  DetectSentimentCommand
+  DetectSentimentCommand,
 } from '@aws-sdk/client-comprehend';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { PutCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
@@ -242,15 +250,13 @@ export async function moderateText(
 
     if (toxicityResponse.ResultList?.[0]) {
       const toxicity = toxicityResponse.ResultList[0];
-      const toxicLabels = toxicity.Labels?.filter(
-        label => (label.Score || 0) > TOXIC_THRESHOLD
-      );
+      const toxicLabels = toxicity.Labels?.filter((label) => (label.Score || 0) > TOXIC_THRESHOLD);
 
       if (toxicLabels && toxicLabels.length > 0) {
         result.flags.push('TOXICITY');
         result.isApproved = false;
         result.confidence = Math.min(result.confidence, 1 - (toxicLabels[0].Score || 0));
-        result.details.toxicity = toxicLabels.map(l => ({
+        result.details.toxicity = toxicLabels.map((l) => ({
           name: l.Name,
           score: l.Score,
         }));
@@ -267,13 +273,13 @@ export async function moderateText(
 
     if (piiResponse.Entities && piiResponse.Entities.length > 0) {
       const highConfidencePII = piiResponse.Entities.filter(
-        entity => (entity.Score || 0) > PII_THRESHOLD
+        (entity) => (entity.Score || 0) > PII_THRESHOLD
       );
 
       if (highConfidencePII.length > 0) {
         result.flags.push('PII_EXPOSED');
         result.requiresManualReview = true;
-        result.details.pii = highConfidencePII.map(e => ({
+        result.details.pii = highConfidencePII.map((e) => ({
           type: e.Type,
           score: e.Score,
         }));
@@ -288,8 +294,10 @@ export async function moderateText(
       })
     );
 
-    if (sentimentResponse.Sentiment === 'NEGATIVE' &&
-        (sentimentResponse.SentimentScore?.Negative || 0) > NEGATIVE_SENTIMENT_THRESHOLD) {
+    if (
+      sentimentResponse.Sentiment === 'NEGATIVE' &&
+      (sentimentResponse.SentimentScore?.Negative || 0) > NEGATIVE_SENTIMENT_THRESHOLD
+    ) {
       result.flags.push('NEGATIVE_SENTIMENT');
       result.requiresManualReview = true;
       result.details.sentiment = {
@@ -308,7 +316,6 @@ export async function moderateText(
 
     // Store moderation results
     await storeModerationResult(contentId, contentType, result);
-
   } catch (error) {
     console.error('Text moderation error:', error);
     // On error, flag for manual review
@@ -334,37 +341,42 @@ function checkProfanity(text: string): { found: boolean; matches: string[] } {
 
 function detectSpam(text: string): number {
   let spamScore = 0;
-  
+
   // Check for excessive caps
   const capsRatio = (text.match(/[A-Z]/g) || []).length / text.length;
   if (capsRatio > 0.5) spamScore += 0.3;
-  
+
   // Check for excessive punctuation
   const punctuationRatio = (text.match(/[!?]{2,}/g) || []).length;
   if (punctuationRatio > 3) spamScore += 0.2;
-  
+
   // Check for repeated characters
   const repeatedChars = text.match(/(.)\1{4,}/g);
   if (repeatedChars) spamScore += 0.2;
-  
+
   // Check for suspicious URLs
   const urlPattern = /(https?:\/\/[^\s]+)/g;
   const urls = text.match(urlPattern) || [];
   if (urls.length > 2) spamScore += 0.3;
-  
+
   // Check for common spam phrases
   const spamPhrases = [
-    'click here', 'buy now', 'limited time', 'act now',
-    'make money', 'work from home', 'congratulations you won'
+    'click here',
+    'buy now',
+    'limited time',
+    'act now',
+    'make money',
+    'work from home',
+    'congratulations you won',
   ];
-  
+
   for (const phrase of spamPhrases) {
     if (text.toLowerCase().includes(phrase)) {
       spamScore += 0.2;
       break;
     }
   }
-  
+
   return Math.min(spamScore, 1.0);
 }
 
@@ -374,33 +386,36 @@ async function storeModerationResult(
   result: TextModerationResult
 ) {
   for (const flag of result.flags) {
-    await dynamoClient.send(new PutCommand({
-      TableName: process.env.CONTENT_FLAGS_TABLE!,
-      Item: {
-        id: `${contentId}-${flag}-${Date.now()}`,
-        contentId,
-        contentType,
-        flagType: flag,
-        confidence: result.confidence,
-        details: result.details,
-        source: 'comprehend',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      },
-    }));
+    await dynamoClient.send(
+      new PutCommand({
+        TableName: process.env.CONTENT_FLAGS_TABLE!,
+        Item: {
+          id: `${contentId}-${flag}-${Date.now()}`,
+          contentId,
+          contentType,
+          flagType: flag,
+          confidence: result.confidence,
+          details: result.details,
+          source: 'comprehend',
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        },
+      })
+    );
   }
 }
 ```
 
 #### Step 3: Image Moderation with AWS Rekognition
+
 **File:** `amplify/backend/function/image-moderation/handler.ts`
 
 ```typescript
-import { 
-  RekognitionClient, 
+import {
+  RekognitionClient,
   DetectModerationLabelsCommand,
   DetectTextCommand,
-  DetectFacesCommand
+  DetectFacesCommand,
 } from '@aws-sdk/client-rekognition';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import * as crypto from 'crypto';
@@ -447,11 +462,11 @@ export async function moderateImage(
     const getObjectResponse = await s3Client.send(
       new GetObjectCommand({ Bucket: bucket, Key: key })
     );
-    
+
     if (getObjectResponse.Body) {
       const imageBuffer = await streamToBuffer(getObjectResponse.Body as NodeJS.ReadableStream);
       result.imageHash = crypto.createHash('sha256').update(imageBuffer).digest('hex');
-      
+
       // Check if image hash is banned
       const isBanned = await checkBannedImageHash(result.imageHash);
       if (isBanned) {
@@ -481,7 +496,7 @@ export async function moderateImage(
           result.flags.push(label.Name?.toUpperCase().replace(/ /g, '_') || 'UNKNOWN');
           result.confidence = Math.min(result.confidence, 1 - (label.Confidence || 0) / 100);
         }
-        
+
         // Add to details for review
         if (!result.details.moderationLabels) {
           result.details.moderationLabels = [];
@@ -507,17 +522,16 @@ export async function moderateImage(
     );
 
     if (textResponse.TextDetections && textResponse.TextDetections.length > 0) {
-      const detectedText = textResponse.TextDetections
-        .map(t => t.DetectedText)
+      const detectedText = textResponse.TextDetections.map((t) => t.DetectedText)
         .filter(Boolean)
         .join(' ');
-      
+
       // Run text through text moderation
       const textModResult = await moderateText(detectedText, contentId, 'IMAGE_TEXT');
-      
+
       if (!textModResult.isApproved) {
         result.isApproved = false;
-        result.flags.push(...textModResult.flags.map(f => `TEXT_${f}`));
+        result.flags.push(...textModResult.flags.map((f) => `TEXT_${f}`));
         result.details.textInImage = {
           text: detectedText,
           moderation: textModResult,
@@ -547,9 +561,9 @@ export async function moderateImage(
 
     // Check for children in images
     const hasChildren = facesResponse.FaceDetails?.some(
-      face => face.AgeRange && face.AgeRange.High && face.AgeRange.High < 18
+      (face) => face.AgeRange && face.AgeRange.High && face.AgeRange.High < 18
     );
-    
+
     if (hasChildren) {
       result.requiresManualReview = true;
       result.flags.push('POTENTIAL_MINOR');
@@ -557,7 +571,6 @@ export async function moderateImage(
 
     // Store moderation results
     await storeImageModerationResult(contentId, result);
-
   } catch (error) {
     console.error('Image moderation error:', error);
     result.requiresManualReview = true;
@@ -573,10 +586,7 @@ async function checkBannedImageHash(hash: string): Promise<boolean> {
   return false; // Placeholder
 }
 
-async function storeImageModerationResult(
-  contentId: string,
-  result: ImageModerationResult
-) {
+async function storeImageModerationResult(contentId: string, result: ImageModerationResult) {
   // Store in DynamoDB for audit trail
   // Implementation similar to text moderation storage
 }
@@ -596,6 +606,7 @@ import { moderateText } from '../text-moderation/handler';
 ### Part C: Manual Moderation Dashboard
 
 #### Step 4: Moderator Dashboard UI
+
 **File:** `src/app/moderator/dashboard/page.tsx`
 
 ```typescript
@@ -1012,6 +1023,7 @@ export default function ModeratorDashboard() {
 ### Part D: User Reporting System
 
 #### Step 5: Report Content Component
+
 **File:** `src/components/ReportContent/ReportDialog.tsx`
 
 ```typescript
@@ -1108,7 +1120,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
   const getPriority = (reason: string): 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' => {
     const highPriority = ['DANGEROUS_CONTENT', 'HARASSMENT', 'COPYRIGHT_VIOLATION'];
     const mediumPriority = ['INAPPROPRIATE_CONTENT', 'MISINFORMATION'];
-    
+
     if (highPriority.includes(reason)) return 'HIGH';
     if (mediumPriority.includes(reason)) return 'MEDIUM';
     return 'LOW';
@@ -1218,7 +1230,9 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
 ## Moderation Policies & Guidelines
 
 ### Content Guidelines
+
 1. **Prohibited Content:**
+
    - Explicit adult content
    - Violence or gore
    - Hate speech or discrimination
@@ -1228,6 +1242,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
    - Personal information (PII)
 
 2. **Restricted Content:**
+
    - Alcohol/tobacco (context-dependent)
    - Political content (monitored)
    - Medical advice (requires disclaimer)
@@ -1239,6 +1254,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
    - Relevant images
 
 ### Moderation Workflow
+
 1. **Automated Review:** All content passes through automated checks
 2. **Risk Scoring:** Content assigned risk score based on flags
 3. **Queue Assignment:** High-risk content prioritized for review
@@ -1249,6 +1265,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
 ## Acceptance Criteria
 
 ### Technical Implementation
+
 - [ ] Moderation data models created
 - [ ] Text moderation with AWS Comprehend working
 - [ ] Image moderation with AWS Rekognition working
@@ -1258,6 +1275,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
 - [ ] Moderation metrics tracked
 
 ### Operational Readiness
+
 - [ ] Moderation guidelines documented
 - [ ] Moderator training completed
 - [ ] Escalation process defined
@@ -1265,6 +1283,7 @@ export const ReportDialog: React.FC<ReportDialogProps> = ({
 - [ ] Appeals process documented
 
 ### Compliance
+
 - [ ] COPPA compliance for minors
 - [ ] DMCA process for copyright
 - [ ] Data retention policies defined

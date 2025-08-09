@@ -1,11 +1,13 @@
 # Story 1.7: Monitoring and Observability Setup
 
 ## Story Statement
+
 As a platform operator,  
 I want comprehensive monitoring and observability across all services,  
 so that we can proactively identify issues, optimize performance, and ensure high availability for our users.
 
 ## Priority: HIGH
+
 This story should be completed as part of Epic 1 to ensure monitoring is in place from the start.
 
 ## Monitoring Architecture
@@ -23,6 +25,7 @@ Application Metrics → CloudWatch → Dashboards → Alarms → SNS → PagerDu
 ### Part A: CloudWatch Metrics and Dashboards
 
 #### Step 1: Define Custom Metrics
+
 **File:** `src/lib/monitoring/metrics.ts`
 
 ```typescript
@@ -35,24 +38,24 @@ export enum MetricNames {
   USER_SIGNUP = 'UserSignup',
   USER_LOGIN = 'UserLogin',
   USER_LOGIN_FAILED = 'UserLoginFailed',
-  
+
   // Card metrics
   CARD_CREATED = 'CardCreated',
   CARD_VIEWED = 'CardViewed',
   CARD_VOTED = 'CardVoted',
   CARD_SAVED = 'CardSaved',
-  
+
   // Image metrics
   IMAGE_UPLOADED = 'ImageUploaded',
   IMAGE_PROCESSED = 'ImageProcessed',
   IMAGE_PROCESSING_FAILED = 'ImageProcessingFailed',
   IMAGE_PROCESSING_DURATION = 'ImageProcessingDuration',
-  
+
   // API metrics
   API_REQUEST = 'APIRequest',
   API_ERROR = 'APIError',
   API_LATENCY = 'APILatency',
-  
+
   // Search metrics
   SEARCH_PERFORMED = 'SearchPerformed',
   SEARCH_RESULTS_EMPTY = 'SearchResultsEmpty',
@@ -90,7 +93,7 @@ class MetricsClient {
 
     // Batch metrics for efficiency
     this.batchedMetrics.push(metric);
-    
+
     if (this.batchedMetrics.length >= 20) {
       await this.flush();
     } else if (!this.batchTimer) {
@@ -103,7 +106,7 @@ class MetricsClient {
 
     const metrics = [...this.batchedMetrics];
     this.batchedMetrics = [];
-    
+
     if (this.batchTimer) {
       clearTimeout(this.batchTimer);
       this.batchTimer = null;
@@ -129,44 +132,31 @@ class MetricsClient {
       logout: MetricNames.USER_LOGIN, // Track as negative value
     };
 
-    await this.putMetric(
-      metricMap[action],
-      action === 'logout' ? -1 : 1,
-      'Count'
-    );
+    await this.putMetric(metricMap[action], action === 'logout' ? -1 : 1, 'Count');
   }
 
-  async trackAPICall(
-    endpoint: string,
-    method: string,
-    statusCode: number,
-    duration: number
-  ) {
+  async trackAPICall(endpoint: string, method: string, statusCode: number, duration: number) {
     // Track request count
-    await this.putMetric(
-      MetricNames.API_REQUEST,
-      1,
-      'Count',
-      { Endpoint: endpoint, Method: method, StatusCode: statusCode.toString() }
-    );
+    await this.putMetric(MetricNames.API_REQUEST, 1, 'Count', {
+      Endpoint: endpoint,
+      Method: method,
+      StatusCode: statusCode.toString(),
+    });
 
     // Track errors
     if (statusCode >= 400) {
-      await this.putMetric(
-        MetricNames.API_ERROR,
-        1,
-        'Count',
-        { Endpoint: endpoint, Method: method, StatusCode: statusCode.toString() }
-      );
+      await this.putMetric(MetricNames.API_ERROR, 1, 'Count', {
+        Endpoint: endpoint,
+        Method: method,
+        StatusCode: statusCode.toString(),
+      });
     }
 
     // Track latency
-    await this.putMetric(
-      MetricNames.API_LATENCY,
-      duration,
-      'Milliseconds',
-      { Endpoint: endpoint, Method: method }
-    );
+    await this.putMetric(MetricNames.API_LATENCY, duration, 'Milliseconds', {
+      Endpoint: endpoint,
+      Method: method,
+    });
   }
 
   async trackCardAction(
@@ -194,6 +184,7 @@ export const metrics = new MetricsClient();
 ```
 
 #### Step 2: Create CloudWatch Dashboard
+
 **File:** `amplify/backend/monitoring/dashboard.ts`
 
 ```typescript
@@ -333,6 +324,7 @@ export class MonitoringDashboard extends Construct {
 ### Part B: Application Logging
 
 #### Step 3: Structured Logging Setup
+
 **File:** `src/lib/logging/logger.ts`
 
 ```typescript
@@ -366,9 +358,7 @@ winston.addColors(colors);
 const consoleFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf(
-    (info) => `${info.timestamp} ${info.level}: ${info.message}`
-  )
+  winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
 );
 
 // JSON format for production
@@ -433,6 +423,7 @@ export default logger;
 ```
 
 #### Step 4: API Middleware Logging
+
 **File:** `src/middleware/logging.ts`
 
 ```typescript
@@ -444,7 +435,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function loggingMiddleware(request: NextRequest) {
   const requestId = uuidv4();
   const startTime = Date.now();
-  
+
   // Add request ID to headers
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-request-id', requestId);
@@ -476,12 +467,7 @@ export async function loggingMiddleware(request: NextRequest) {
     });
 
     // Send metrics
-    await metrics.trackAPICall(
-      new URL(request.url).pathname,
-      request.method,
-      statusCode,
-      duration
-    );
+    await metrics.trackAPICall(new URL(request.url).pathname, request.method, statusCode, duration);
 
     // Add custom headers
     response.headers.set('x-request-id', requestId);
@@ -490,7 +476,7 @@ export async function loggingMiddleware(request: NextRequest) {
     return response;
   } catch (error) {
     const duration = Date.now() - startTime;
-    
+
     apiLogger.error('API Error', {
       requestId,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -499,17 +485,9 @@ export async function loggingMiddleware(request: NextRequest) {
     });
 
     // Send error metrics
-    await metrics.trackAPICall(
-      new URL(request.url).pathname,
-      request.method,
-      500,
-      duration
-    );
+    await metrics.trackAPICall(new URL(request.url).pathname, request.method, 500, duration);
 
-    return NextResponse.json(
-      { error: 'Internal Server Error', requestId },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal Server Error', requestId }, { status: 500 });
   }
 }
 ```
@@ -517,6 +495,7 @@ export async function loggingMiddleware(request: NextRequest) {
 ### Part C: AWS X-Ray Tracing
 
 #### Step 5: Configure X-Ray Tracing
+
 **File:** `src/lib/tracing/xray.ts`
 
 ```typescript
@@ -528,10 +507,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 const isProduction = process.env.NEXT_PUBLIC_ENVIRONMENT === 'prod';
 
 if (isProduction) {
-  AWSXRay.config([
-    AWSXRay.plugins.ECSPlugin,
-    AWSXRay.plugins.ElasticBeanstalkPlugin,
-  ]);
+  AWSXRay.config([AWSXRay.plugins.ECSPlugin, AWSXRay.plugins.ElasticBeanstalkPlugin]);
 
   // Set sampling rules
   AWSXRay.middleware.setSamplingRules({
@@ -563,10 +539,7 @@ export const tracedS3 = isProduction
   : new S3Client({});
 
 // Helper to create subsegments
-export function traceAsyncFunction<T>(
-  name: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export function traceAsyncFunction<T>(name: string, fn: () => Promise<T>): Promise<T> {
   if (!isProduction) {
     return fn();
   }
@@ -610,6 +583,7 @@ export function addTraceAnnotation(key: string, value: string | number | boolean
 ### Part D: CloudWatch Alarms
 
 #### Step 6: Define Critical Alarms
+
 **File:** `amplify/backend/monitoring/alarms.ts`
 
 ```typescript
@@ -639,9 +613,7 @@ export class MonitoringAlarms extends Construct {
     });
 
     // Add email subscription
-    alarmTopic.addSubscription(
-      new snsSubscriptions.EmailSubscription(props.alarmEmail)
-    );
+    alarmTopic.addSubscription(new snsSubscriptions.EmailSubscription(props.alarmEmail));
 
     // Add Slack webhook if provided
     if (props.slackWebhookUrl) {
@@ -736,7 +708,7 @@ export class MonitoringAlarms extends Construct {
       metric: new cloudwatch.Metric({
         namespace: 'AWS/DynamoDB',
         metricName: 'ConsumedReadCapacityUnits',
-        dimensionsMap: { 
+        dimensionsMap: {
           TableName: `PerfectIt-${props.environment}-Cards`,
         },
         statistic: 'Sum',
@@ -754,6 +726,7 @@ export class MonitoringAlarms extends Construct {
 ### Part E: Cost Monitoring
 
 #### Step 7: Cost Tracking and Budgets
+
 **File:** `amplify/backend/monitoring/budgets.ts`
 
 ```typescript
@@ -848,8 +821,8 @@ export class CostMonitoring extends Construct {
 
     // Service-specific budgets
     const services = ['Lambda', 'DynamoDB', 'S3', 'CloudFront', 'Cognito'];
-    
-    services.forEach(service => {
+
+    services.forEach((service) => {
       new budgets.CfnBudget(this, `${service}Budget`, {
         budget: {
           budgetName: `PerfectIt-${props.environment}-${service}`,
@@ -889,13 +862,17 @@ export class CostMonitoring extends Construct {
 ### Part F: Health Checks and Synthetic Monitoring
 
 #### Step 8: Health Check Endpoints
+
 **File:** `src/app/api/health/route.ts`
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { DynamoDBClient, DescribeTableCommand } from '@aws-sdk/client-dynamodb';
 import { S3Client, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { CognitoIdentityProviderClient, DescribeUserPoolCommand } from '@aws-sdk/client-cognito-identity-provider';
+import {
+  CognitoIdentityProviderClient,
+  DescribeUserPoolCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
 
 const dynamoClient = new DynamoDBClient({});
 const s3Client = new S3Client({});
@@ -988,15 +965,14 @@ export async function GET(request: NextRequest) {
   // Check if all critical services are down
   const criticalServices = ['dynamodb', 'cognito'];
   const allCriticalDown = criticalServices.every(
-    service => result.services[service]?.status === 'down'
+    (service) => result.services[service]?.status === 'down'
   );
-  
+
   if (allCriticalDown) {
     result.status = 'unhealthy';
   }
 
-  const statusCode = result.status === 'healthy' ? 200 : 
-                     result.status === 'degraded' ? 206 : 503;
+  const statusCode = result.status === 'healthy' ? 200 : result.status === 'degraded' ? 206 : 503;
 
   return NextResponse.json(result, { status: statusCode });
 }
@@ -1005,6 +981,7 @@ export async function GET(request: NextRequest) {
 ## Monitoring Checklist
 
 ### Daily Monitoring Tasks
+
 - [ ] Check CloudWatch dashboard for anomalies
 - [ ] Review error rate trends
 - [ ] Check API latency percentiles
@@ -1012,6 +989,7 @@ export async function GET(request: NextRequest) {
 - [ ] Review any triggered alarms
 
 ### Weekly Monitoring Tasks
+
 - [ ] Review cost trends in Cost Explorer
 - [ ] Check X-Ray service map for bottlenecks
 - [ ] Analyze slow query patterns
@@ -1019,6 +997,7 @@ export async function GET(request: NextRequest) {
 - [ ] Update runbooks for new issues
 
 ### Monthly Monitoring Tasks
+
 - [ ] Review and adjust alarm thresholds
 - [ ] Analyze cost optimization opportunities
 - [ ] Update dashboard layouts
@@ -1028,6 +1007,7 @@ export async function GET(request: NextRequest) {
 ## Acceptance Criteria
 
 ### Implementation Complete
+
 - [ ] CloudWatch metrics implemented
 - [ ] Dashboard created and configured
 - [ ] Structured logging in place
@@ -1037,6 +1017,7 @@ export async function GET(request: NextRequest) {
 - [ ] Health check endpoints working
 
 ### Operational Readiness
+
 - [ ] Team trained on dashboards
 - [ ] Alert escalation defined
 - [ ] Runbooks documented

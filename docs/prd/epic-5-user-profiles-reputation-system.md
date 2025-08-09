@@ -3,11 +3,13 @@
 **Goal:** Develop comprehensive user profiles that showcase expertise, contributions, and build trust within the community. This epic completes the MVP by adding the human element to the platform.
 
 ### Story 5.1: Create User Profile Pages
+
 As a user,  
 I want a profile page that showcases my contributions and expertise,  
 so that I can build reputation and connect with the community.
 
 **Acceptance Criteria:**
+
 1. Public profile URL (perfectit.com/u/username)
 2. Profile header with avatar, name, bio, joined date
 3. Expertise tags with endorsement counts
@@ -20,11 +22,13 @@ so that I can build reputation and connect with the community.
 10. Edit profile button for own profile
 
 ### Story 5.2: Implement Profile Editing
+
 As a user,  
 I want to customize my profile information,  
 so that I can accurately represent my skills and interests.
 
 **Acceptance Criteria:**
+
 1. Edit profile form with all editable fields
 2. Amplify UI Avatar component with FileUploader for profile images
 3. Bio rich text editor with character limit
@@ -37,11 +41,13 @@ so that I can accurately represent my skills and interests.
 10. Success confirmation with view profile link
 
 ### Story 5.3: Build Reputation Scoring System
+
 As a platform owner,  
 I want users to earn reputation based on quality contributions,  
 so that expertise and helpfulness are recognized and rewarded.
 
 **Acceptance Criteria:**
+
 1. Reputation score calculation algorithm implemented
 2. Points for cards created, upvotes received, helpful comments
 3. Reputation badges/levels (Beginner, Contributor, Expert, Master)
@@ -54,11 +60,13 @@ so that expertise and helpfulness are recognized and rewarded.
 10. Anti-gaming measures for reputation system
 
 ### Story 5.4: Implement Expertise Tag System
+
 As a user,  
 I want to tag my areas of expertise and have them verified by the community,  
 so that others can trust my knowledge in specific domains.
 
 **Acceptance Criteria:**
+
 1. Predefined expertise tag taxonomy
 2. Tag selection during profile creation/editing
 3. Endorsement system for other users' expertise
@@ -71,11 +79,13 @@ so that others can trust my knowledge in specific domains.
 10. Tag moderation for inappropriate entries
 
 ### Story 5.5: Create User Dashboard
+
 As an authenticated user,  
 I want a personal dashboard to manage my content and track engagement,  
 so that I can monitor my impact and improve my contributions.
 
 **Acceptance Criteria:**
+
 1. Dashboard homepage for authenticated users
 2. Quick stats widgets (views, votes, comments this week)
 3. Recent activity on user's cards
@@ -86,4 +96,3 @@ so that I can monitor my impact and improve my contributions.
 8. Quick actions (create card, manage collections)
 9. Notification summary widget
 10. Personalization options for dashboard layout
-

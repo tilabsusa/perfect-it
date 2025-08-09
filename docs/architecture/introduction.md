@@ -8,11 +8,13 @@ If the project includes a significant user interface, a separate Frontend Archit
 ### Starter Template or Existing Project
 
 Based on your clarification, this project uses the **AWS Amplify Next.js Template** as its foundation:
+
 - **Template Source:** https://github.com/aws-samples/amplify-next-template
 - **Template Type:** Official AWS sample template for Amplify Gen 2 with Next.js
 - **Key Features:** Pre-configured Next.js 14+ App Router, Amplify Gen 2 backend setup, TypeScript support, authentication scaffolding
 
 **Decision:** Development will proceed using the already-cloned `amplify-next-template` which provides:
+
 - Pre-configured monorepo structure with Next.js and Amplify backend
 - Working authentication setup with Amplify Auth
 - Example data models and API configuration
@@ -22,7 +24,7 @@ Based on your clarification, this project uses the **AWS Amplify Next.js Templat
 This template accelerates development by providing a production-ready foundation that aligns with AWS best practices.
 
 ### Change Log
-| Date | Version | Description | Author |
-|------|---------|-------------|--------|
-| 2025-08-08 | 1.0 | Initial Architecture Document | Architect |
-
+
+| Date       | Version | Description                   | Author    |
+| ---------- | ------- | ----------------------------- | --------- |
+| 2025-08-08 | 1.0     | Initial Architecture Document | Architect |

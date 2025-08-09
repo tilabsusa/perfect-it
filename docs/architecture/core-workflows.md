@@ -47,16 +47,16 @@ sequenceDiagram
     L->>L: Resize & optimize
     L->>S: Save processed images
     L->>D: Update image metadata
-    
+
     U->>N: Fill card details
     N->>A: Mutation: createCard
     A->>D: Save card data
     D->>A: Confirm save
     A->>N: Return card ID
-    
+
     D->>L: DynamoDB Stream event
     L->>O: Index card for search
-    
+
     N->>U: Show success & redirect
 ```
 
@@ -82,12 +82,12 @@ sequenceDiagram
         A->>O: Full-text search
         O->>A: Return matches
     end
-    
+
     A->>N: Return results
     N->>CF: Request card images
     CF->>N: Deliver cached images
     N->>U: Display card grid
-    
+
     U->>N: Click card
     N->>A: Query: getCard
     A->>D: Fetch full details
@@ -109,24 +109,24 @@ sequenceDiagram
     participant Sub as Subscriptions
 
     Note over U2,N2: Viewing same card
-    
+
     U1->>N1: Click upvote
     N1->>N1: Optimistic update
     N1->>A: Mutation: voteCard
     A->>D: Save vote
     D->>A: Confirm
     A->>Sub: Publish update
-    
+
     Sub->>N1: Confirm vote
     Sub->>N2: Notify vote change
     N2->>U2: Update vote count
-    
+
     U1->>N1: Write comment
     N1->>A: Mutation: addComment
     A->>D: Save comment
     D->>A: Confirm
     A->>Sub: Publish comment
-    
+
     Sub->>N2: New comment
     N2->>U2: Display comment
 ```
@@ -146,7 +146,7 @@ sequenceDiagram
     N->>A: Mutation: flagContent
     A->>D: Save flag record
     A->>M: Trigger moderation
-    
+
     M->>D: Check flag count
     alt Threshold Exceeded
         M->>D: Update status to "Under Review"
@@ -157,9 +157,8 @@ sequenceDiagram
     else Below Threshold
         M->>D: Log flag only
     end
-    
+
     D->>A: Return status
     A->>N: Confirm flag
     N->>U: Show acknowledgment
 ```
-

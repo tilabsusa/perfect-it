@@ -47,21 +47,25 @@ perfectit/
 ## Setup Instructions
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Initialize Amplify** (if not already done):
+
    ```bash
    amplify init
    ```
 
 3. **Deploy the sandbox environment**:
+
    ```bash
    amplify sandbox
    ```
 
 4. **Start the development server**:
+
    ```bash
    npm run dev
    ```

@@ -15,16 +15,17 @@ graph LR
 
 ### Environment Strategy
 
-| Environment | Purpose | Data | Access |
-|------------|---------|------|--------|
-| Local | Development | Mock data | Developers |
-| Sandbox | Integration testing | Test data | Dev team |
-| Staging | Pre-production validation | Prod-like data | QA team |
-| Production | Live system | Real data | Public |
+| Environment | Purpose                   | Data           | Access     |
+| ----------- | ------------------------- | -------------- | ---------- |
+| Local       | Development               | Mock data      | Developers |
+| Sandbox     | Integration testing       | Test data      | Dev team   |
+| Staging     | Pre-production validation | Prod-like data | QA team    |
+| Production  | Live system               | Real data      | Public     |
 
 ### Deployment Process
 
 #### Amplify Hosting Configuration
+
 ```yaml
 version: 1
 frontend:
@@ -45,6 +46,7 @@ frontend:
 ```
 
 #### Rollback Strategy
+
 - **Blue-green deployment:** Zero-downtime updates
 - **Canary releases:** 10% traffic to new version
 - **Instant rollback:** One-click revert in Amplify Console
@@ -53,6 +55,7 @@ frontend:
 ### Operational Procedures
 
 #### Incident Response
+
 1. **Detection:** CloudWatch alarm triggers
 2. **Triage:** On-call engineer assesses severity
 3. **Mitigation:** Apply immediate fix or rollback
@@ -60,7 +63,7 @@ frontend:
 5. **Post-mortem:** Document lessons learned
 
 #### Maintenance Windows
+
 - **Scheduled:** Tuesday 2-4 AM EST
 - **Notifications:** 48-hour advance notice
 - **Types:** Security patches, infrastructure updates
-

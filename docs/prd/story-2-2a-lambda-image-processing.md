@@ -1,11 +1,13 @@
 # Story 2.2a: Lambda Image Processing Pipeline Setup
 
 ## Story Statement
+
 As a developer,  
 I want to implement a serverless image processing pipeline using AWS Lambda,  
 so that uploaded images are automatically optimized, resized, and distributed via CDN without impacting application performance.
 
 ## Dependencies
+
 - Story 1.1: Project initialization complete
 - Story 2.1: Data model established
 - Story 2.2: S3 bucket configured
@@ -23,6 +25,7 @@ User Upload → S3 Bucket → S3 Event → Lambda Function → Processed Images 
 ### Part A: Lambda Layer Creation
 
 #### Step 1: Create Sharp Lambda Layer
+
 **File:** `amplify/backend/function/sharp-layer/build-layer.sh`
 
 ```bash
@@ -64,6 +67,7 @@ aws s3 cp sharp-layer.zip s3://perfectit-deployment-artifacts/layers/
 ```
 
 #### Step 2: Deploy Lambda Layer via CDK
+
 **File:** `amplify/backend/function/sharp-layer/resource.ts`
 
 ```typescript
@@ -93,7 +97,7 @@ export class SharpLambdaLayer extends Construct {
     new cdk.CfnOutput(this, 'SharpLayerArn', {
       value: this.layer.layerVersionArn,
       description: 'ARN of the Sharp Lambda Layer',
-      exportName: 'SharpLayerArn'
+      exportName: 'SharpLayerArn',
     });
   }
 }
@@ -102,11 +106,17 @@ export class SharpLambdaLayer extends Construct {
 ### Part B: Lambda Function Implementation
 
 #### Step 3: Create Image Processing Lambda
+
 **File:** `amplify/backend/function/image-processor/handler.ts`
 
 ```typescript
 import { S3Event, Context, Callback } from 'aws-lambda';
-import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { PutCommand, DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import * as sharp from 'sharp';
@@ -128,7 +138,7 @@ const IMAGE_VARIANTS: ImageVariant[] = [
   { name: 'medium', width: 800, quality: 85, format: 'jpeg' },
   { name: 'large', width: 1200, quality: 90, format: 'jpeg' },
   { name: 'webp-medium', width: 800, quality: 85, format: 'webp' },
-  { name: 'webp-large', width: 1200, quality: 90, format: 'webp' }
+  { name: 'webp-large', width: 1200, quality: 90, format: 'webp' },
 ];
 
 export const handler = async (event: S3Event, context: Context, callback: Callback) => {
@@ -137,7 +147,7 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
   for (const record of event.Records) {
     const bucket = record.s3.bucket.name;
     const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
-    
+
     // Skip if already processed (check for variant prefix)
     if (key.includes('/processed/')) {
       console.log('Skipping already processed image:', key);
@@ -148,7 +158,7 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
       // Download original image
       const getCommand = new GetObjectCommand({ Bucket: bucket, Key: key });
       const response = await s3Client.send(getCommand);
-      
+
       if (!response.Body) {
         throw new Error('Empty response body from S3');
       }
@@ -165,7 +175,8 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
         throw new Error('Invalid image dimensions');
       }
 
-      if (imageBuffer.length > 10 * 1024 * 1024) { // 10MB limit
+      if (imageBuffer.length > 10 * 1024 * 1024) {
+        // 10MB limit
         throw new Error('Image too large (>10MB)');
       }
 
@@ -182,27 +193,29 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
         try {
           const processedBuffer = await processImage(imageBuffer, variant, metadata);
           const variantKey = generateVariantKey(key, variant.name);
-          
+
           // Upload processed image
-          await s3Client.send(new PutObjectCommand({
-            Bucket: bucket,
-            Key: variantKey,
-            Body: processedBuffer,
-            ContentType: `image/${variant.format}`,
-            CacheControl: 'public, max-age=31536000', // 1 year cache
-            Metadata: {
-              originalKey: key,
-              variant: variant.name,
-              processedAt: new Date().toISOString()
-            }
-          }));
+          await s3Client.send(
+            new PutObjectCommand({
+              Bucket: bucket,
+              Key: variantKey,
+              Body: processedBuffer,
+              ContentType: `image/${variant.format}`,
+              CacheControl: 'public, max-age=31536000', // 1 year cache
+              Metadata: {
+                originalKey: key,
+                variant: variant.name,
+                processedAt: new Date().toISOString(),
+              },
+            })
+          );
 
           processedImages.push({
             key: variantKey,
             size: processedBuffer.length,
             width: variant.width,
             height: variant.height,
-            format: variant.format
+            format: variant.format,
           });
 
           console.log(`Processed variant ${variant.name}: ${variantKey}`);
@@ -219,13 +232,12 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
       await storeBlurPlaceholder(key, placeholder);
 
       console.log(`Successfully processed image: ${key}`);
-      
     } catch (error) {
       console.error(`Error processing image ${key}:`, error);
-      
+
       // Send to DLQ or notification
       await handleProcessingError(bucket, key, error as Error);
-      
+
       callback(error as Error);
       return;
     }
@@ -235,7 +247,7 @@ export const handler = async (event: S3Event, context: Context, callback: Callba
 };
 
 async function processImage(
-  buffer: Buffer, 
+  buffer: Buffer,
   variant: ImageVariant,
   metadata: sharp.Metadata
 ): Promise<Buffer> {
@@ -249,35 +261,35 @@ async function processImage(
     // Crop to exact dimensions
     pipeline = pipeline.resize(variant.width, variant.height, {
       fit: 'cover',
-      position: 'center'
+      position: 'center',
     });
   } else {
     // Resize maintaining aspect ratio
     pipeline = pipeline.resize(variant.width, undefined, {
       fit: 'inside',
-      withoutEnlargement: true
+      withoutEnlargement: true,
     });
   }
 
   // Format conversion
   switch (variant.format) {
     case 'jpeg':
-      pipeline = pipeline.jpeg({ 
+      pipeline = pipeline.jpeg({
         quality: variant.quality,
         progressive: true,
-        mozjpeg: true 
+        mozjpeg: true,
       });
       break;
     case 'webp':
-      pipeline = pipeline.webp({ 
+      pipeline = pipeline.webp({
         quality: variant.quality,
-        effort: 4 
+        effort: 4,
       });
       break;
     case 'png':
-      pipeline = pipeline.png({ 
+      pipeline = pipeline.png({
         quality: variant.quality,
-        compressionLevel: 9 
+        compressionLevel: 9,
       });
       break;
   }
@@ -296,7 +308,7 @@ function generateVariantKey(originalKey: string, variantName: string): string {
   const nameParts = filename!.split('.');
   const extension = nameParts.pop();
   const nameWithoutExt = nameParts.join('.');
-  
+
   // Structure: processed/[variant]/[original-path]/[filename]
   return `processed/${variantName}/${parts.join('/')}/${nameWithoutExt}.${extension}`;
 }
@@ -307,45 +319,45 @@ async function generateBlurPlaceholder(buffer: Buffer): Promise<string> {
     .blur(5)
     .jpeg({ quality: 50 })
     .toBuffer();
-  
+
   return `data:image/jpeg;base64,${placeholder.toString('base64')}`;
 }
 
-async function storeImageMetadata(
-  key: string,
-  metadata: sharp.Metadata,
-  processedImages: any[]
-) {
+async function storeImageMetadata(key: string, metadata: sharp.Metadata, processedImages: any[]) {
   const item = {
     id: key,
     type: 'IMAGE_METADATA',
     originalDimensions: {
       width: metadata.width,
-      height: metadata.height
+      height: metadata.height,
     },
     format: metadata.format,
     size: metadata.size,
     processedVariants: processedImages,
     processedAt: new Date().toISOString(),
-    exif: metadata.exif ? JSON.stringify(metadata.exif) : null
+    exif: metadata.exif ? JSON.stringify(metadata.exif) : null,
   };
 
-  await dynamoClient.send(new PutCommand({
-    TableName: process.env.IMAGE_METADATA_TABLE!,
-    Item: item
-  }));
+  await dynamoClient.send(
+    new PutCommand({
+      TableName: process.env.IMAGE_METADATA_TABLE!,
+      Item: item,
+    })
+  );
 }
 
 async function storeBlurPlaceholder(key: string, placeholder: string) {
-  await dynamoClient.send(new PutCommand({
-    TableName: process.env.IMAGE_METADATA_TABLE!,
-    Item: {
-      id: `${key}#placeholder`,
-      type: 'BLUR_PLACEHOLDER',
-      data: placeholder,
-      createdAt: new Date().toISOString()
-    }
-  }));
+  await dynamoClient.send(
+    new PutCommand({
+      TableName: process.env.IMAGE_METADATA_TABLE!,
+      Item: {
+        id: `${key}#placeholder`,
+        type: 'BLUR_PLACEHOLDER',
+        data: placeholder,
+        createdAt: new Date().toISOString(),
+      },
+    })
+  );
 }
 
 async function handleProcessingError(bucket: string, key: string, error: Error) {
@@ -354,22 +366,24 @@ async function handleProcessingError(bucket: string, key: string, error: Error) 
     bucket,
     key,
     error: error.message,
-    stack: error.stack
+    stack: error.stack,
   });
 
   // Store error in DynamoDB for monitoring
-  await dynamoClient.send(new PutCommand({
-    TableName: process.env.IMAGE_METADATA_TABLE!,
-    Item: {
-      id: `error#${key}`,
-      type: 'PROCESSING_ERROR',
-      bucket,
-      key,
-      error: error.message,
-      timestamp: new Date().toISOString(),
-      retryCount: 0
-    }
-  }));
+  await dynamoClient.send(
+    new PutCommand({
+      TableName: process.env.IMAGE_METADATA_TABLE!,
+      Item: {
+        id: `error#${key}`,
+        type: 'PROCESSING_ERROR',
+        bucket,
+        key,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+        retryCount: 0,
+      },
+    })
+  );
 
   // TODO: Send SNS notification for critical errors
 }
@@ -384,6 +398,7 @@ async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
 ```
 
 #### Step 4: Lambda Configuration
+
 **File:** `amplify/backend/function/image-processor/resource.ts`
 
 ```typescript
@@ -400,15 +415,16 @@ export const imageProcessor = defineFunction({
     NODE_OPTIONS: '--enable-source-maps',
     IMAGE_METADATA_TABLE: process.env.IMAGE_METADATA_TABLE!,
     MAX_IMAGE_SIZE: '10485760', // 10MB
-    CLOUDFRONT_DISTRIBUTION: process.env.CLOUDFRONT_DISTRIBUTION!
+    CLOUDFRONT_DISTRIBUTION: process.env.CLOUDFRONT_DISTRIBUTION!,
   },
-  layers: ['arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:SharpLayer:1']
+  layers: ['arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:layer:SharpLayer:1'],
 });
 ```
 
 ### Part C: S3 Event Configuration
 
 #### Step 5: Configure S3 Triggers
+
 **File:** `amplify/backend/storage/resource.ts`
 
 ```typescript
@@ -420,14 +436,9 @@ import { imageProcessor } from '../function/image-processor/resource';
 export const storage = defineStorage({
   name: 'perfectitUploads',
   access: (allow) => ({
-    'uploads/*': [
-      allow.authenticated.to(['write']),
-      allow.guest.to(['read'])
-    ],
-    'processed/*': [
-      allow.guest.to(['read'])
-    ]
-  })
+    'uploads/*': [allow.authenticated.to(['write']), allow.guest.to(['read'])],
+    'processed/*': [allow.guest.to(['read'])],
+  }),
 });
 
 // Add S3 event notification for image uploads
@@ -436,7 +447,7 @@ storage.resources.bucket.addEventNotification(
   new s3n.LambdaDestination(imageProcessor.resources.lambda),
   {
     prefix: 'uploads/',
-    suffix: '.jpg'
+    suffix: '.jpg',
   }
 );
 
@@ -445,7 +456,7 @@ storage.resources.bucket.addEventNotification(
   new s3n.LambdaDestination(imageProcessor.resources.lambda),
   {
     prefix: 'uploads/',
-    suffix: '.jpeg'
+    suffix: '.jpeg',
   }
 );
 
@@ -454,7 +465,7 @@ storage.resources.bucket.addEventNotification(
   new s3n.LambdaDestination(imageProcessor.resources.lambda),
   {
     prefix: 'uploads/',
-    suffix: '.png'
+    suffix: '.png',
   }
 );
 
@@ -463,7 +474,7 @@ storage.resources.bucket.addEventNotification(
   new s3n.LambdaDestination(imageProcessor.resources.lambda),
   {
     prefix: 'uploads/',
-    suffix: '.webp'
+    suffix: '.webp',
   }
 );
 ```
@@ -471,6 +482,7 @@ storage.resources.bucket.addEventNotification(
 ### Part D: Frontend Integration
 
 #### Step 6: Create Image Upload Component with Processing Status
+
 **File:** `src/components/ImageUpload/ProcessingStatus.tsx`
 
 ```typescript
@@ -504,7 +516,7 @@ export const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     const checkProcessingStatus = async () => {
       try {
         const response = await client.models.ImageMetadata.get({ id: uploadKey });
-        
+
         if (response.data?.processedVariants && response.data.processedVariants.length > 0) {
           setStatus('complete');
           setVariants(response.data.processedVariants);
@@ -514,10 +526,10 @@ export const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
         }
 
         // Check for processing error
-        const errorResponse = await client.models.ImageMetadata.get({ 
-          id: `error#${uploadKey}` 
+        const errorResponse = await client.models.ImageMetadata.get({
+          id: `error#${uploadKey}`
         });
-        
+
         if (errorResponse.data) {
           setStatus('error');
           setError(errorResponse.data.error || 'Processing failed');
@@ -536,10 +548,10 @@ export const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       setProgress((retries / maxRetries) * 100);
 
       const isComplete = await checkProcessingStatus();
-      
+
       if (isComplete || retries >= maxRetries) {
         clearInterval(poll);
-        
+
         if (retries >= maxRetries && status === 'processing') {
           setStatus('error');
           setError('Processing timeout - please try again');
@@ -592,6 +604,7 @@ export const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
 ### Part E: Testing & Monitoring
 
 #### Step 7: Lambda Testing Script
+
 **File:** `scripts/test-image-processing.js`
 
 ```javascript
@@ -607,12 +620,12 @@ async function testImageUpload() {
     { file: 'test-medium.jpg', size: '2MB' },
     { file: 'test-large.jpg', size: '8MB' },
     { file: 'test-portrait.jpg', size: '1MB' },
-    { file: 'test-landscape.jpg', size: '1MB' }
+    { file: 'test-landscape.jpg', size: '1MB' },
   ];
 
   for (const testImage of testImages) {
     const imagePath = path.join(__dirname, '../test-data/images', testImage.file);
-    
+
     if (!fs.existsSync(imagePath)) {
       console.log(`⚠️  Test image not found: ${testImage.file}`);
       continue;
@@ -622,20 +635,21 @@ async function testImageUpload() {
     const key = `uploads/test/${Date.now()}-${testImage.file}`;
 
     try {
-      await s3Client.send(new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET || 'perfectit-uploads-dev',
-        Key: key,
-        Body: fileContent,
-        ContentType: 'image/jpeg'
-      }));
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET || 'perfectit-uploads-dev',
+          Key: key,
+          Body: fileContent,
+          ContentType: 'image/jpeg',
+        })
+      );
 
       console.log(`✅ Uploaded test image: ${key} (${testImage.size})`);
-      
+
       // Wait and check processing
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
       // TODO: Check if processed variants exist
-      
     } catch (error) {
       console.error(`❌ Failed to upload ${testImage.file}:`, error);
     }
@@ -646,6 +660,7 @@ testImageUpload();
 ```
 
 #### Step 8: CloudWatch Monitoring
+
 **File:** `amplify/backend/monitoring/image-processing-alarms.ts`
 
 ```typescript
@@ -661,35 +676,35 @@ export function createImageProcessingAlarms(
   // Error rate alarm
   new cloudwatch.Alarm(stack, 'ImageProcessingErrorAlarm', {
     metric: lambdaFunction.metricErrors({
-      period: Duration.minutes(5)
+      period: Duration.minutes(5),
     }),
     threshold: 5,
     evaluationPeriods: 1,
     alarmDescription: 'Image processing Lambda error rate too high',
-    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
   }).addAlarmAction(new actions.SnsAction(alarmTopic));
 
   // Duration alarm
   new cloudwatch.Alarm(stack, 'ImageProcessingDurationAlarm', {
     metric: lambdaFunction.metricDuration({
       period: Duration.minutes(5),
-      statistic: 'Average'
+      statistic: 'Average',
     }),
     threshold: 30000, // 30 seconds
     evaluationPeriods: 2,
     alarmDescription: 'Image processing taking too long',
-    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
   }).addAlarmAction(new actions.SnsAction(alarmTopic));
 
   // Throttles alarm
   new cloudwatch.Alarm(stack, 'ImageProcessingThrottleAlarm', {
     metric: lambdaFunction.metricThrottles({
-      period: Duration.minutes(5)
+      period: Duration.minutes(5),
     }),
     threshold: 1,
     evaluationPeriods: 1,
     alarmDescription: 'Image processing Lambda being throttled',
-    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING
+    treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
   }).addAlarmAction(new actions.SnsAction(alarmTopic));
 }
 ```
@@ -697,6 +712,7 @@ export function createImageProcessingAlarms(
 ## Performance Optimization
 
 ### Image Processing Best Practices
+
 1. **Memory Allocation:** 2048MB provides best price/performance for Sharp
 2. **Concurrent Executions:** Set reserved concurrency to prevent throttling
 3. **S3 Transfer Acceleration:** Enable for faster uploads from users
@@ -704,6 +720,7 @@ export function createImageProcessingAlarms(
 5. **Progressive Enhancement:** Generate WebP for modern browsers
 
 ### Cost Optimization
+
 - Process on-demand, not pre-generate all variants
 - Use S3 Intelligent-Tiering for infrequently accessed images
 - Set lifecycle policies to delete old processed variants
@@ -712,6 +729,7 @@ export function createImageProcessingAlarms(
 ## Acceptance Criteria
 
 ### Technical Requirements
+
 - [ ] Sharp Lambda layer deployed successfully
 - [ ] Image processing Lambda function deployed
 - [ ] S3 event triggers configured
@@ -721,12 +739,14 @@ export function createImageProcessingAlarms(
 - [ ] CloudWatch alarms configured
 
 ### Performance Requirements
+
 - [ ] Images processed within 10 seconds (95th percentile)
 - [ ] Lambda cold start under 3 seconds
 - [ ] Error rate below 1%
 - [ ] Support for images up to 10MB
 
 ### Quality Requirements
+
 - [ ] EXIF orientation handled correctly
 - [ ] Image quality acceptable for all variants
 - [ ] WebP variants for modern browser support
@@ -735,6 +755,7 @@ export function createImageProcessingAlarms(
 ## Rollback Plan
 
 If image processing fails:
+
 1. Disable S3 event triggers
 2. Fall back to client-side resizing (temporary)
 3. Process images manually via script
@@ -743,13 +764,13 @@ If image processing fails:
 
 ## Common Issues & Solutions
 
-| Issue | Solution |
-|-------|----------|
-| Sharp binary incompatible | Rebuild layer on Amazon Linux 2 |
-| Lambda timeout | Increase timeout to 60s, optimize code |
-| Memory errors | Increase Lambda memory to 3008MB |
-| S3 event not triggering | Check bucket notification configuration |
-| Processed images not accessible | Verify S3 bucket CORS and policies |
+| Issue                           | Solution                                |
+| ------------------------------- | --------------------------------------- |
+| Sharp binary incompatible       | Rebuild layer on Amazon Linux 2         |
+| Lambda timeout                  | Increase timeout to 60s, optimize code  |
+| Memory errors                   | Increase Lambda memory to 3008MB        |
+| S3 event not triggering         | Check bucket notification configuration |
+| Processed images not accessible | Verify S3 bucket CORS and policies      |
 
 ## Definition of Done
 
