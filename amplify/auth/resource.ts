@@ -1,5 +1,4 @@
-import { defineAuth } from '@aws-amplify/backend';
-import { postConfirmation } from '../functions/post-confirmation/resource';
+import { defineAuth, secret } from '@aws-amplify/backend';
 
 /**
  * Define and configure your auth resource
@@ -15,23 +14,21 @@ export const auth = defineAuth({
     },
     externalProviders: {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID || '',
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+        clientId: secret('GOOGLE_CLIENT_ID'),
+        clientSecret: secret('GOOGLE_CLIENT_SECRET'),
         scopes: ['email', 'profile', 'openid'],
         attributeMapping: {
           email: 'email',
-          username: 'sub',
           preferredUsername: 'name',
           profilePicture: 'picture',
         },
       },
       facebook: {
-        clientId: process.env.FACEBOOK_APP_ID || '',
-        clientSecret: process.env.FACEBOOK_APP_SECRET || '',
+        clientId: secret('FACEBOOK_APP_ID'),
+        clientSecret: secret('FACEBOOK_APP_SECRET'),
         scopes: ['email', 'public_profile'],
         attributeMapping: {
           email: 'email',
-          username: 'id',
           preferredUsername: 'name',
         },
       },
@@ -50,30 +47,11 @@ export const auth = defineAuth({
     },
   },
   accountRecovery: 'EMAIL_ONLY',
-  passwordPolicy: {
-    minLength: 8,
-    requireLowercase: true,
-    requireUppercase: true,
-    requireNumbers: true,
-    requireSymbols: true,
-  },
-  groups: {
-    standard_user: {
-      precedence: 3,
-    },
-    moderator: {
-      precedence: 2,
-    },
-    admin: {
-      precedence: 1,
-    },
-  },
+  groups: ['STANDARD_USER', 'MODERATOR', 'ADMIN'],
   multifactor: {
     mode: 'OPTIONAL',
     sms: true,
     totp: true,
   },
-  triggers: {
-    postConfirmation,
-  },
+  triggers: {},
 });

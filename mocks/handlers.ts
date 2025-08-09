@@ -1,4 +1,4 @@
-const { graphql, http, HttpResponse } = require('msw');
+import { graphql, http, HttpResponse } from 'msw';
 
 const handlers = [
   graphql.query('GetUser', ({ query, variables }) => {
@@ -105,4 +105,4 @@ const handlers = [
   }),
 ];
 
-module.exports = { handlers };
+export { handlers };

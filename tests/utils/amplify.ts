@@ -16,7 +16,7 @@ export const mockAmplifyConfig = {
           scopes: ['email', 'profile', 'openid'],
           redirectSignIn: ['http://localhost:3000/'],
           redirectSignOut: ['http://localhost:3000/'],
-          responseType: 'code',
+          responseType: 'code' as const,
         },
       },
     },
@@ -25,7 +25,7 @@ export const mockAmplifyConfig = {
     GraphQL: {
       endpoint: 'http://localhost:20002/graphql',
       region: 'us-east-1',
-      defaultAuthMode: 'userPool',
+      defaultAuthMode: 'userPool' as const,
     },
   },
   Storage: {

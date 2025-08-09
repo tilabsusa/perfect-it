@@ -2,7 +2,7 @@
 
 import Authenticator from '@/components/auth/Authenticator';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <div
       style={{
@@ -13,7 +13,7 @@ export default function LoginPage() {
         backgroundColor: '#f9fafb',
       }}
     >
-      <Authenticator initialState="signIn" />
+      <Authenticator initialState="signUp" />
     </div>
   );
 }
